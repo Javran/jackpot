@@ -9,29 +9,33 @@ module Alex where
 $digit = 0-9
 $alpha = [a-zA-Z]
 
--- TODO: this is just small example to get project to compile, nothing about Java yet.
+@Digits = $digit|($digit($digit|_)*$digit)
 
 tokens :-
 
   $white+
     ;
-  "--".*
+  "//".*
     ;
-  let
-    { \_ _ -> pure () }
-  in
-    { \_ _ -> pure () }
-  $digit+
-    { \(_, _, xs, _) l -> pure () }
-  [\=\+\-\*\/\(\)]
-    { \(_, _, xs, _) 1 -> pure () }
-  $alpha [$alpha $digit \_ \']*
-    { \(_, _, xs, _) l -> pure () }
+  true
+    { \_ _ -> pure (BooleanLiteral True) }
+  false
+    { \_ _ -> pure (BooleanLiteral False) }
+  null
+    { \_ _ -> pure NullLiteral }
+  (0|((1-9)(@Digits)?)|((1-9)_+@Digits))([lL])?
+    -- DecimalIntegerLiteral
+    { \(_, _, xs, _) l -> pure Placeholder }
 
 {
 
-type Token = ()
+data Token
+  = Placeholder
+  | BooleanLiteral Bool
+  | IntegerLiteral Integer Bool {- whether IntegerTypeSuffix is present -}
+  | NullLiteral
+  | EndOfFile
 
-alexEOF = pure ()
+alexEOF = pure EndOfFile
 
 }
