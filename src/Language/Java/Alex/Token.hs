@@ -24,11 +24,8 @@ data Token
   prefixing "-" unary operation.
  -}
 
-{-
-  Use Haskell's Read facility to parse an integer.
- -}
-parseInteger :: MonadError String m => Char -> String -> m Token
-parseInteger prevChar _
+parseByRead :: MonadError String m => ReadS Integer -> Char -> String -> m Token
+parseByRead _ prevChar _
   | isDigit prevChar =
     {-
      This is weird case is necessary to handle parsing octal literals correctly:
@@ -39,8 +36,8 @@ parseInteger prevChar _
      and reject if that is indeed the case.
     -}
     throwError "integer literal cannot directly follow any digit"
-parseInteger _ inp =
-  case reads inp of
+parseByRead reader _ inp =
+  case reader $ filter (/= '_') inp of
     [(v, mayL)]
       | mayL `elem` ["", "L", "l"] ->
         pure $ IntegerLiteral v (mayL /= "")
@@ -54,22 +51,18 @@ parseInteger _ inp =
  -}
 getDecimalOrHex :: MonadError String m => Char -> BSL.ByteString -> Int64 -> m Token
 getDecimalOrHex prevCh xs l =
-  parseInteger prevCh (filter (/= '_') inp)
+  parseByRead reads prevCh inp
   where
     inp = BSLC.unpack $ BSLC.take l xs
 
 getOctal :: MonadError String m => Char -> BSL.ByteString -> Int64 -> m Token
 getOctal prevCh xs l =
-  parseInteger prevCh ("0o" <> filter (/= '_') inp)
+  parseByRead reads prevCh ("0o" <> filter (/= '_') inp)
   where
     '0' : inp = BSLC.unpack $ BSLC.take l xs
 
 getBinary :: MonadError String m => Char -> BSL.ByteString -> Int64 -> m Token
-getBinary _prevCh xs l =
-  case readInt 2 (`elem` "01") (\ch -> ord ch - ord '0') $ filter (/= '_') inp of
-    [(v, mayL)]
-      | mayL `elem` ["", "L", "l"] ->
-        pure $ IntegerLiteral v (mayL /= "")
-    _ -> throwError "parse error"
+getBinary prevCh xs l = parseByRead reader prevCh inp
   where
+    reader = readInt 2 (`elem` "01") (\ch -> ord ch - ord '0')
     '0' : _b : inp = BSLC.unpack $ BSLC.take l xs
