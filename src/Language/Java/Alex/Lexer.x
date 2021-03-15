@@ -19,7 +19,7 @@ $digit = 0-9
 $hexdigit = [0-9a-fA-F]
 $alpha = [a-zA-Z]
 
-@Digits = $digit|($digit($digit|_)*$digit)
+@Digits = $digit|$digit($digit|_)*$digit
 
 tokens :-
 
@@ -33,7 +33,7 @@ tokens :-
     { \_ _ -> pure (BooleanLiteral False) }
   null
     { \_ _ -> pure NullLiteral }
-  (0|((1-9)(@Digits)?)|((1-9)_+@Digits))[lL]?
+  (0|(1-9)@Digits?|(1-9)_+@Digits)[lL]?
     -- DecimalIntegerLiteral
     { \(_, ch, xs, _) l -> getDecimalOrHex ch xs l }
   0[xX]($hexdigit|$hexdigit($hexdigit|_)*$hexdigit)[lL]?
