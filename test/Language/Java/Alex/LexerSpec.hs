@@ -7,15 +7,21 @@ module Language.Java.Alex.LexerSpec where
   which is more convenient to work with.
  -}
 
-import qualified Data.ByteString.Lazy as BSL
+import Control.Monad
 import Data.Either
+import Data.String
 import Language.Java.Alex.Token
 import Language.Java.Alex.Wrapper
 import Test.Hspec
+import Text.Read
 
-parseOk :: BSL.ByteString -> [Token] -> Expectation
+parseOk :: String -> [Token] -> Expectation
 parseOk raw expected =
-  parseAll raw `shouldBe` Right expected
+  parseAll (fromString raw) `shouldBe` Right expected
+
+parseFail :: String -> Expectation
+parseFail raw =
+  parseAll (fromString raw) `shouldSatisfy` isLeft
 
 spec :: Spec
 spec = do
@@ -26,17 +32,46 @@ spec = do
     specify "BooleanLiteral" $
       parseOk "true false" $ BooleanLiteral <$> [True, False]
 
-  describe "IntegerLiteral" $
+  describe "IntegerLiteral" $ do
+    let int v = IntegerLiteral v False
+        long v = IntegerLiteral v True
+
     describe "DecimalIntegerLiteral" $ do
       specify "0" $
-        parseOk "  0  " [Todo "0"]
+        parseOk "  0  " [int 0]
       specify "non-zero single digit" $ do
-        parseOk "1" [Todo "1"]
-        parseOk "7" [Todo "7"]
+        forM_ [1 .. 9] $ \x ->
+          parseOk (show x) [int x]
       specify "many digits" $ do
-        parseOk "90" [Todo "90"]
-        parseOk "12345" [Todo "12345"]
+        parseOk "90" [int 90]
+        parseOk "12345" [int 12345]
       specify "interleave with underscores" $ do
-        parseOk "1__2__34__5" [Todo "1__2__34__5"]
-        parseOk "12__34__5" [Todo "12__34__5"]
-        parseAll "_12__34__5" `shouldSatisfy` isLeft
+        parseOk "1__2__34__5" [int 12345]
+        parseOk "12__34_____5" [int 12345]
+        parseFail "_12__34__5"
+      specify "IntegerTypeSuffix" $ do
+        parseOk "1_2__34__5L" [long 12345]
+        parseOk "54321l" [long 54321]
+        parseFail "1_2_L"
+
+    describe "HexIntegerLiteral" $ do
+      specify "0x / 0X" $ do
+        parseOk "0xdeadbeef" [int 0xdeadbeef]
+        parseOk "0XDEADBEEF" [int 0xDEADBEEF]
+      specify "single digit" $ do
+        forM_ (['0' .. '9'] <> "ABCDEF" <> "abcdef") $ \ch -> do
+          let inp = "0x" <> [ch]
+              Right expected = readEither inp
+          parseOk inp [int expected]
+      specify "more than one digit" $ do
+        parseOk "0xEA" [int 0xEA]
+        parseOk "0x01234" [int 0x1234]
+        parseFail "0xEFG"
+      specify "interleave with underscores" $ do
+        parseFail "0x_EA"
+        parseFail "0xEA_"
+        parseOk "0xA___B___C__D__E" [int 0xABCDE]
+      specify "IntegerTypeSuffix" $ do
+        parseOk "0x1_2__34__5L" [long 0x12345]
+        parseOk "0X54321l" [long 0x54321]
+        parseFail "0x1_2_L"

@@ -16,6 +16,7 @@ import Language.Java.Alex.Token
 %wrapper "monad-bytestring"
 
 $digit = 0-9
+$hexdigit = [0-9a-fA-F]
 $alpha = [a-zA-Z]
 
 @Digits = $digit|($digit($digit|_)*$digit)
@@ -32,10 +33,12 @@ tokens :-
     { \_ _ -> pure (BooleanLiteral False) }
   null
     { \_ _ -> pure NullLiteral }
-  (0|((1-9)(@Digits)?)|((1-9)_+@Digits))([lL])?
+  (0|((1-9)(@Digits)?)|((1-9)_+@Digits))[lL]?
     -- DecimalIntegerLiteral
-    { \(_, _, xs, _) l -> pure $ Todo (BSL.take l xs) }
-
+    { \(_, _, xs, _) l -> getHsInteger xs l }
+  0[xX]($hexdigit|$hexdigit($hexdigit|_)*$hexdigit)[lL]?
+    -- HexIntegerLiteral
+    { \(_, _, xs, _) l -> getHsInteger xs l }
 {
 
 alexEOF :: Alex Token
