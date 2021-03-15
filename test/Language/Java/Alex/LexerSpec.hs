@@ -112,3 +112,11 @@ spec = do
         parseOk "0b1__0" [int 0b10]
         parseOk "0b111_____01" [int 0b11101]
         parseOk "0b111___1_1__01" [int 0b1111101]
+
+  describe "FloatingPointLiteral" $ do
+    specify "spec examples" $ do
+      -- TODO: for now this just says those raw inputs can be recognized.
+      let xs = words "1e1f 2.f .3f 0f 3.14f 6.022137e+23f \
+                     \1e1 2. .3 0.0 3.14 1e-9d 1e137"
+      forM_ xs $ \raw ->
+        parseAll (fromString raw) `shouldBe` Right [Todo $ fromString raw]
