@@ -26,6 +26,8 @@ $alpha = [a-zA-Z]
 @SignedInteger = [\+\-]?@Digits
 @ExponentPart = [eE][\+\-]?@SignedInteger
 @FloatTypeSuffix = [fFdD]
+@HexSignificand = @HexNumeral\.?|0[xX]@HexDigits?\.@HexDigits
+@BinaryExponent = [pP]@SignedInteger
 
 tokens :-
 
@@ -66,6 +68,9 @@ tokens :-
     { todo }
   --   DecimalFloatingPointLiteral
   @Digits@ExponentPart?@FloatTypeSuffix
+    { todo }
+  --  HexadecimalFloatingPointLiteral
+  @HexSignificand@BinaryExponent@FloatTypeSuffix?
     { todo }
 
 {
