@@ -24,14 +24,11 @@ data Token
  -}
 
 {-
-  Side note: what is the previous char even before Alex start to consume anything?
-
-  Answer: '\n', according to:
-  https://github.com/simonmar/alex/blob/35f07a1c272c6b3aace858c2b1b0c427a1d89e67/data/AlexWrappers.hs#L201
+  Use Haskell's Read facility to parse an integer.
  -}
-getHsInteger :: MonadError String m => Char -> BSL.ByteString -> Int64 -> m Token
-getHsInteger ch _ _
-  | isDigit ch =
+parseInteger :: MonadError String m => Char -> String -> m Token
+parseInteger prevChar _
+  | isDigit prevChar =
     {-
      This is weird case is necessary to handle parsing octal literals correctly:
 
@@ -41,22 +38,27 @@ getHsInteger ch _ _
      and reject if that is indeed the case.
     -}
     throwError "integer literal cannot directly follow any digit"
-getHsInteger _ xs l =
-  case reads (filter (/= '_') inp) of
+parseInteger _ inp =
+  case reads inp of
     [(v, mayL)]
       | mayL `elem` ["", "L", "l"] ->
         pure $ IntegerLiteral v (mayL /= "")
     _ -> throwError "parse error"
+
+{-
+  Side note: what is the previous char even before Alex start to consume anything?
+
+  Answer: '\n', according to:
+  https://github.com/simonmar/alex/blob/35f07a1c272c6b3aace858c2b1b0c427a1d89e67/data/AlexWrappers.hs#L201
+ -}
+getDecimalOrHex :: MonadError String m => Char -> BSL.ByteString -> Int64 -> m Token
+getDecimalOrHex prevCh xs l =
+  parseInteger prevCh (filter (/= '_') inp)
   where
     inp = BSLC.unpack $ BSLC.take l xs
 
--- TODO: refactor
 getOctal :: MonadError String m => Char -> BSL.ByteString -> Int64 -> m Token
-getOctal _ xs l =
-  case reads ("0o" <> filter (/= '_') inp) of
-    [(v, mayL)]
-      | mayL `elem` ["", "L", "l"] ->
-        pure $ IntegerLiteral v (mayL /= "")
-    _ -> throwError "parse error"
+getOctal prevCh xs l =
+  parseInteger prevCh ("0o" <> filter (/= '_') inp)
   where
     '0' : inp = BSLC.unpack $ BSLC.take l xs
