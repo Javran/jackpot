@@ -59,16 +59,16 @@ tokens :-
   -- FloatingPointLiteral
   --   DecimalFloatingPointLiteral
   @Digits\.@Digits?@ExponentPart?@FloatTypeSuffix?
-    { todo }
+    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
   --   DecimalFloatingPointLiteral
   \.@Digits@ExponentPart?@FloatTypeSuffix?
-    { todo }
+    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
   --   DecimalFloatingPointLiteral
   @Digits@ExponentPart@FloatTypeSuffix?
-    { todo }
+    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
   --   DecimalFloatingPointLiteral
   @Digits@ExponentPart?@FloatTypeSuffix
-    { todo }
+    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
   --  HexadecimalFloatingPointLiteral
   @HexSignificand@BinaryExponent@FloatTypeSuffix?
     { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }

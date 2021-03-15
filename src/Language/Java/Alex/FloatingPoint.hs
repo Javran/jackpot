@@ -4,9 +4,8 @@ module Language.Java.Alex.FloatingPoint where
 
 import Data.Char
 import Data.Scientific
-import Numeric (readHex)
+import Numeric (readDec, readHex)
 import Text.ParserCombinators.ReadP
-import Text.Read (readEither)
 
 {-
   Parsing floating point literals.
@@ -27,8 +26,23 @@ import Text.Read (readEither)
 
  -}
 
+oneOf :: [] Char -> ReadP Char
+oneOf xs = satisfy (`elem` xs)
+
 floatingPointLiteralS :: ReadS (Scientific, Bool)
 floatingPointLiteralS = readP_to_S (floatingPointLiteral <* eof)
+
+floatTypeSuffix :: ReadP Bool
+floatTypeSuffix =
+  (True <$ oneOf "dD")
+    <++ (False <$ oneOf "fF")
+
+signedInteger :: ReadP Integer
+signedInteger = do
+  sign <- option 1 ((1 <$ char '+') <++ ((-1) <$ char '-'))
+  ds <- filter (/= '_') <$> munch1 (\ch -> isDigit ch || ch == '_')
+  [(v, "")] <- pure $ readDec @Integer ds
+  pure $ v * sign
 
 floatingPointLiteral
   , decimalFloatingPointLiteral
@@ -36,19 +50,59 @@ floatingPointLiteral
     :: ReadP (Scientific, Bool)
 floatingPointLiteral =
   hexadecimalFloatingPointLiteral <++ decimalFloatingPointLiteral
-decimalFloatingPointLiteral = pfail -- TODO
+decimalFloatingPointLiteral = do
+  sig <-
+    (do
+       -- <before> <dot> [after]
+       beforeDot <- digits
+       [(bfd, "")] <- pure $ readDec @Integer $ beforeDot
+       let intPart :: Scientific
+           intPart = fromInteger bfd
+       _ <- char '.'
+       afterDot <- option "0" digits
+       [(afd, "")] <- pure $ readDec @Integer $ afterDot
+       let fracPart :: Scientific
+           fracPart = fromInteger afd / (10 ^ length afterDot)
+       pure (intPart + fracPart))
+      +++ (do
+             -- <dot> <after>
+             _ <- char '.'
+             afterDot <- option "0" digits
+             [(afd, "")] <- pure $ readDec @Integer $ afterDot
+             let fracPart :: Scientific
+                 fracPart = fromInteger afd / (10 ^ length afterDot)
+             pure fracPart)
+      +++ (do
+             -- <before>
+             beforeDot <- digits
+             [(bfd, "")] <- pure $ readDec @Integer $ beforeDot
+             let intPart :: Scientific
+                 intPart = fromInteger bfd
+             pure intPart)
+  decExpon <- option 0 exponentPart
+  let expon :: Scientific
+      expon =
+        -- for whatever reason "^ <negative number>" is a runtime exception for Scientific.
+        if decExpon >= 0
+          then 10 ^ decExpon
+          else 1 / (10 ^ (- decExpon))
+  isDouble <- option True floatTypeSuffix
+  pure (sig * expon, isDouble)
+  where
+    digits = filter (/= '_') <$> munch1 (\ch -> isDigit ch || ch == '_')
+    exponentPart = oneOf "eE" *> signedInteger
 hexadecimalFloatingPointLiteral = do
   sig <- hexSignificand
   binExpon <- binaryExponent
   let expon :: Scientific
       expon = 2 ^ binExpon
-  isDouble <- option True ((True <$ satisfy (`elem` "dD")) <++ (False <$ satisfy (`elem` "fF")))
+  isDouble <- option True floatTypeSuffix
   pure (sig * expon, isDouble)
   where
     hexSignificand :: ReadP Scientific
     hexSignificand = do
       _ <- char '0'
-      _ <- satisfy (`elem` "xX")
+      _ <- oneOf "xX"
       (do
          beforeDot <- hexDigits <* optional (char '.')
          [(v, "")] <- pure $ readHex @Integer $ beforeDot
@@ -69,9 +123,5 @@ hexadecimalFloatingPointLiteral = do
           filter (/= '_')
             <$> munch1 (\ch -> isHexDigit ch || ch == '_')
     binaryExponent :: ReadP Integer
-    binaryExponent = do
-      _ <- satisfy (`elem` "pP")
-      sign <- option 1 ((1 <$ char '+') <++ ((-1) <$ char '-'))
-      ds <- filter (/= '_') <$> munch1 (\ch -> isDigit ch || ch == '_')
-      Right v <- pure $ readEither @Integer ds
-      pure $ v * sign
+    binaryExponent =
+      oneOf "pP" *> signedInteger

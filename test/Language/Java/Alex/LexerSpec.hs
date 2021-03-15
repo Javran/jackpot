@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings, BinaryLiterals #-}
+{-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Java.Alex.LexerSpec where
 
@@ -114,12 +115,28 @@ spec = do
         parseOk "0b111___1_1__01" [int 0b1111101]
 
   describe "FloatingPointLiteral" $ do
+    let float v = FloatingPointLiteral v False
+        double v = FloatingPointLiteral v True
+    -- TODO: improve test coverage.
     specify "spec examples" $ do
-      -- TODO: for now this just says those raw inputs can be recognized.
-      let xs = words "1e1f 2.f .3f 0f 3.14f 6.022137e+23f \
-                     \1e1 2. .3 0.0 3.14 1e-9d 1e137"
-      forM_ xs $ \raw ->
-        parseAll (fromString raw) `shouldBe` Right [Todo $ fromString raw]
+      parseAll
+        "1e1f 2.f .3f 0f 3.14f 6.022137e+23f \
+        \ 1e1 2. .3 0.0 3.14 1e-9d 1e137"
+        `shouldBe` Right
+          [ float 1e1
+          , float 2
+          , float 0.3
+          , float 0
+          , float 3.14
+          , float 6.022137e+23
+          , double 1e1
+          , double 2
+          , double 0.3
+          , double 0
+          , double 3.14
+          , double 1e-9
+          , double 1e137
+          ]
     describe "HexadecimalFloatingPointLiteral" $ do
       specify "examples" $
-        parseOk "0xAABB.CDEp12" [FloatingPointLiteral 1.79027166e8 True]
+        parseOk "0xAABB.CDEp12" [double 1.79027166e8]
