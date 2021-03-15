@@ -1,7 +1,10 @@
 {
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
-module Alex where
+module Language.Java.Alex.Lexer where
+
+import Language.Java.Alex.Token
+
 }
 
 %wrapper "monad-bytestring"
@@ -25,16 +28,9 @@ tokens :-
     { \_ _ -> pure NullLiteral }
   (0|((1-9)(@Digits)?)|((1-9)_+@Digits))([lL])?
     -- DecimalIntegerLiteral
-    { \(_, _, xs, _) l -> pure Placeholder }
+    { \(_, _, xs, _) l -> pure Todo }
 
 {
-
-data Token
-  = Placeholder
-  | BooleanLiteral Bool
-  | IntegerLiteral Integer Bool {- whether IntegerTypeSuffix is present -}
-  | NullLiteral
-  | EndOfFile
 
 alexEOF = pure EndOfFile
 
