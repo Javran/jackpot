@@ -13,9 +13,13 @@ data Token
   = Todo BSL.ByteString
   | BooleanLiteral Bool
   | IntegerLiteral Integer Bool {- whether IntegerTypeSuffix is present -}
+  | FloatingPointLiteral Integer Integer Bool {- whether this is double (True) or float (False) -}
   | NullLiteral
   | EndOfFile
   deriving (Eq, Show)
+
+todo :: Applicative f => (a, b, BSLC.ByteString, d) -> Int64 -> f Token
+todo (_, _, xs, _) l = pure $ Todo (BSLC.take l xs)
 
 {-
   TODO: To be compliant with Java spec

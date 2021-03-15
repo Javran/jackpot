@@ -20,6 +20,12 @@ $hexdigit = [0-9a-fA-F]
 $alpha = [a-zA-Z]
 
 @Digits = $digit|$digit($digit|_)*$digit
+@IntegerTypeSuffix = [lL]
+@HexDigits = $hexdigit|$hexdigit($hexdigit|_)*$hexdigit
+@HexNumeral = 0[xX]@HexDigits
+@SignedInteger = [\+\-]?@Digits
+@ExponentPart = [eE][\+\-]?@SignedInteger
+@FloatTypeSuffix = [fFdD]
 
 tokens :-
 
@@ -33,17 +39,35 @@ tokens :-
     { \_ _ -> pure (BooleanLiteral False) }
   null
     { \_ _ -> pure NullLiteral }
-  (0|(1-9)@Digits?|(1-9)_+@Digits)[lL]?
-    -- DecimalIntegerLiteral
+
+  -- IntegerLiteral
+  --   DecimalIntegerLiteral
+  (0|(1-9)@Digits?|(1-9)_+@Digits)@IntegerTypeSuffix?
     { \(_, ch, xs, _) l -> getDecimalOrHex ch xs l }
-  0[xX]($hexdigit|$hexdigit($hexdigit|_)*$hexdigit)[lL]?
-    -- HexIntegerLiteral
+  --   HexIntegerLiteral
+  @HexNumeral@IntegerTypeSuffix?
     { \(_, ch, xs, _) l -> getDecimalOrHex ch xs l }
-  0(0-7|0-7([_0-7])*0-7)[lL]?
-    -- OctalIntegerLiteral
+  --   OctalIntegerLiteral
+  0(0-7|0-7([_0-7])*0-7)@IntegerTypeSuffix?
     { \(_, ch, xs, _) l -> getOctal ch xs l }
-  0[bB](0-1|0-1([_0-1])*0-1)[lL]?
+  --   BinaryIntegerLiteral
+  0[bB](0-1|0-1([_0-1])*0-1)@IntegerTypeSuffix?
     { \(_, ch, xs, _) l -> getBinary ch xs l }
+
+  -- FloatingPointLiteral
+  --   DecimalFloatingPointLiteral
+  @Digits\.@Digits?@ExponentPart?@FloatTypeSuffix?
+    { todo }
+  --   DecimalFloatingPointLiteral
+  \.@Digits@ExponentPart?@FloatTypeSuffix?
+    { todo }
+  --   DecimalFloatingPointLiteral
+  @Digits@ExponentPart@FloatTypeSuffix?
+    { todo }
+  --   DecimalFloatingPointLiteral
+  @Digits@ExponentPart?@FloatTypeSuffix
+    { todo }
+
 {
 
 alexEOF :: Alex Token
