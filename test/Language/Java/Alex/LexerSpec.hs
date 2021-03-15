@@ -75,3 +75,25 @@ spec = do
         parseOk "0x1_2__34__5L" [long 0x12345]
         parseOk "0X54321l" [long 0x54321]
         parseFail "0x1_2_L"
+
+    describe "OctalIntegerLiteral" $ do
+      specify "one digit" $ do
+        forM_ ['0' .. '7'] $ \ch -> do
+          let Right expected = readEither ("0o" <> [ch])
+          parseOk ('0' : [ch]) [int expected]
+        parseFail "08"
+        parseFail "09"
+      specify "many digits" $ do
+        parseOk "0123456" [int 0o123456]
+        parseOk "000666" [int 0o666]
+        parseFail "0090666"
+        parseFail "0001200238"
+      specify "interleave with underscores" $ do
+        parseFail "0_1"
+        parseFail "01_"
+        parseOk "0123_45" [int 0o12345]
+        parseOk "01__23_4____5" [int 0o12345]
+      specify "IntegerTypeSuffix" $ do
+        parseOk "01_2__34__5L" [long 0o12345]
+        parseOk "054321l" [long 0o54321]
+        parseFail "0x1_2_L"

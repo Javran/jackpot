@@ -35,10 +35,13 @@ tokens :-
     { \_ _ -> pure NullLiteral }
   (0|((1-9)(@Digits)?)|((1-9)_+@Digits))[lL]?
     -- DecimalIntegerLiteral
-    { \(_, _, xs, _) l -> getHsInteger xs l }
+    { \(_, ch, xs, _) l -> getHsInteger ch xs l }
   0[xX]($hexdigit|$hexdigit($hexdigit|_)*$hexdigit)[lL]?
     -- HexIntegerLiteral
-    { \(_, _, xs, _) l -> getHsInteger xs l }
+    { \(_, ch, xs, _) l -> getHsInteger ch xs l }
+  0(0-7|0-7([_0-7])*0-7)[lL]?
+    -- OctalIntegerLiteral
+    { \(_, ch, xs, _) l -> getOctal ch xs l }
 {
 
 alexEOF :: Alex Token
