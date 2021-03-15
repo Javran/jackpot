@@ -22,6 +22,12 @@ data Token
   we need to rule out out-of-bound integers at this stage,
   however it won't be as straightforward due to the interaction with
   prefixing "-" unary operation.
+
+  TODO: probably the problem lies in the fact that we don't have
+  a distinction on whether an error is recoverable - if we are parsing an int,
+  and gets an error because the integer doesn't fit or there are invalid digits,
+  we should generate an error that is not recoverable rather than proceeding to try other things.
+
  -}
 
 parseByRead :: MonadError String m => ReadS Integer -> Char -> String -> m Token
