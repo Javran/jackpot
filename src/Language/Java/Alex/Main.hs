@@ -33,3 +33,15 @@ main = pure ()
   2. & 3. : those two steps can probably be combined into one?
 
  -}
+
+{-
+  TODO: we should probably go with String-based lexer.
+
+  This will makes it easy to be compliant with the spec,
+  this is because we can pre-process the String before
+  passing it to Alex, to handle following cases properly:
+
+  - CR+LF / CR / LF to be normalized.
+  - perform the initial Unicode scan as specified.
+
+ -}
