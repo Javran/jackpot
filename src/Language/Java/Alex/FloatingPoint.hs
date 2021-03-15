@@ -3,6 +3,8 @@
 module Language.Java.Alex.FloatingPoint where
 
 import Data.Char
+import Data.Scientific
+import Numeric (readHex)
 import Text.ParserCombinators.ReadP
 import Text.Read (readEither)
 
@@ -14,35 +16,54 @@ import Text.Read (readEither)
   recognized as proper Java tokens.
  -}
 
+{-
+  An example for hex floating point:
+
+  0xAABB.CDEp12 means:
+
+  0xAABBCDE / (16^3) * (2^12)
+
+  which should be evaluated to: 1.79027166e8
+
+ -}
+
+floatingPointLiteralS :: ReadS (Scientific, Bool)
+floatingPointLiteralS = readP_to_S (floatingPointLiteral <* eof)
+
 floatingPointLiteral
   , decimalFloatingPointLiteral
   , hexadecimalFloatingPointLiteral
-    :: ReadP ((Integer, Integer), Integer, Bool)
+    :: ReadP (Scientific, Bool)
 floatingPointLiteral =
   hexadecimalFloatingPointLiteral <++ decimalFloatingPointLiteral
-decimalFloatingPointLiteral = pfail
+decimalFloatingPointLiteral = pfail -- TODO
 hexadecimalFloatingPointLiteral = do
   sig <- hexSignificand
   binExpon <- binaryExponent
+  let expon :: Scientific
+      expon = 2 ^ binExpon
   isDouble <- option True ((True <$ satisfy (`elem` "dD")) <++ (False <$ satisfy (`elem` "fF")))
-  pure (sig, binExpon, isDouble)
+  pure (sig * expon, isDouble)
   where
-    hexSignificand :: ReadP (Integer, Integer)
+    hexSignificand :: ReadP Scientific
     hexSignificand = do
       _ <- char '0'
       _ <- satisfy (`elem` "xX")
       (do
          beforeDot <- hexDigits <* optional (char '.')
-         Right v <- pure $ readEither @Integer $ "0x" <> beforeDot
-         pure (v, 0))
-        <++ (do
+         [(v, "")] <- pure $ readHex @Integer $ beforeDot
+         pure (fromInteger v))
+        +++ (do
                beforeDot <- option "0" hexDigits
-               Right bfd <- pure $ readEither @Integer $ "0x" <> beforeDot
+               [(bfd, "")] <- pure $ readHex @Integer $ beforeDot
+               let intPart :: Scientific
+                   intPart = fromInteger bfd
                _ <- char '.'
                afterDot <- hexDigits
-               -- TODO: this is incorrect: ".0001" and ".1" will be parsed the same - length must be taken into account.
-               Right afd <- pure $ readEither @Integer $ "0x" <> afterDot
-               pure (bfd, afd))
+               [(afd, "")] <- pure $ readHex @Integer $ afterDot
+               let fracPart :: Scientific
+                   fracPart = fromInteger afd / (16 ^ length afterDot)
+               pure (intPart + fracPart))
       where
         hexDigits =
           filter (/= '_')

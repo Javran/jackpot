@@ -13,6 +13,7 @@ dependencies:
 - array
 - bytestring
 - mtl
+- scientific
 
 library:
   source-dirs: src

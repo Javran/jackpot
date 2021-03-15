@@ -71,7 +71,7 @@ tokens :-
     { todo }
   --  HexadecimalFloatingPointLiteral
   @HexSignificand@BinaryExponent@FloatTypeSuffix?
-    { todo }
+    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
 
 {
 

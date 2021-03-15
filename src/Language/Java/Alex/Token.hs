@@ -7,13 +7,15 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString.Lazy.Char8 as BSLC
 import Data.Char
 import Data.Int
+import Data.Scientific
+import Language.Java.Alex.FloatingPoint (floatingPointLiteralS)
 import Numeric
 
 data Token
   = Todo BSL.ByteString
   | BooleanLiteral Bool
   | IntegerLiteral Integer Bool {- whether IntegerTypeSuffix is present -}
-  | FloatingPointLiteral Integer Integer Bool {- whether this is double (True) or float (False) -}
+  | FloatingPointLiteral Scientific Bool {- whether this is double (True) or float (False) -}
   | NullLiteral
   | EndOfFile
   deriving (Eq, Show)
@@ -76,3 +78,13 @@ getBinary prevCh xs l = parseByRead reader prevCh inp
   where
     reader = readInt 2 (`elem` "01") (\ch -> ord ch - ord '0')
     '0' : _b : inp = BSLC.unpack $ BSLC.take l xs
+
+getFloatingPoint :: MonadError String m => Char -> BSL.ByteString -> Int64 -> m Token
+getFloatingPoint prevChar _ _
+  | isDigit prevChar =
+    throwError "floating point literal cannot directly follow any digit"
+getFloatingPoint _ xs l = case floatingPointLiteralS inp of
+  [((s, d), "")] -> pure $ FloatingPointLiteral s d
+  _ -> throwError "parse error"
+  where
+    inp = BSLC.unpack $ BSLC.take l xs

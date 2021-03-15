@@ -120,3 +120,6 @@ spec = do
                      \1e1 2. .3 0.0 3.14 1e-9d 1e137"
       forM_ xs $ \raw ->
         parseAll (fromString raw) `shouldBe` Right [Todo $ fromString raw]
+    describe "HexadecimalFloatingPointLiteral" $ do
+      specify "examples" $
+        parseOk "0xAABB.CDEp12" [FloatingPointLiteral 1.79027166e8 True]
