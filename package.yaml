@@ -10,6 +10,8 @@ description: description
 
 dependencies:
 - base
+- array
+- bytestring
 
 library:
   source-dirs: src
@@ -19,9 +21,6 @@ library:
   build-tools:  
     - happy
     - alex
-  dependencies:
-    - array
-    - bytestring
 
 executables:
   demo:
