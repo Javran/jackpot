@@ -12,6 +12,7 @@ dependencies:
 - base
 - array
 - bytestring
+- mtl
 
 library:
   source-dirs: src
