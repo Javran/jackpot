@@ -42,6 +42,8 @@ tokens :-
   0(0-7|0-7([_0-7])*0-7)[lL]?
     -- OctalIntegerLiteral
     { \(_, ch, xs, _) l -> getOctal ch xs l }
+  0[bB](0-1|0-1([_0-1])*0-1)[lL]?
+    { \(_, ch, xs, _) l -> getBinary ch xs l }
 {
 
 alexEOF :: Alex Token

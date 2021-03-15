@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, BinaryLiterals #-}
 
 module Language.Java.Alex.LexerSpec where
 
@@ -97,3 +97,18 @@ spec = do
         parseOk "01_2__34__5L" [long 0o12345]
         parseOk "054321l" [long 0o54321]
         parseFail "0x1_2_L"
+
+    describe "BinaryIntegerLiteral" $ do
+      specify "0b / 0B" $ do
+        parseOk "0b1011" [int 0b1011]
+        parseOk "0B1011" [int 0b1011]
+      specify "digits" $ do
+        parseOk "0b1001111" [int 0b1001111]
+        parseOk "0b000111101" [int 0b111101]
+      specify "interleave with underscores" $ do
+        parseFail "0b_1"
+        parseFail "0b1_"
+        parseOk "0b1" [int 1]
+        parseOk "0b1__0" [int 0b10]
+        parseOk "0b111_____01" [int 0b11101]
+        parseOk "0b111___1_1__01" [int 0b1111101]

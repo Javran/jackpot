@@ -7,6 +7,7 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString.Lazy.Char8 as BSLC
 import Data.Char
 import Data.Int
+import Numeric
 
 data Token
   = Todo BSL.ByteString
@@ -62,3 +63,13 @@ getOctal prevCh xs l =
   parseInteger prevCh ("0o" <> filter (/= '_') inp)
   where
     '0' : inp = BSLC.unpack $ BSLC.take l xs
+
+getBinary :: MonadError String m => Char -> BSL.ByteString -> Int64 -> m Token
+getBinary _prevCh xs l =
+  case readInt 2 (`elem` "01") (\ch -> ord ch - ord '0') $ filter (/= '_') inp of
+    [(v, mayL)]
+      | mayL `elem` ["", "L", "l"] ->
+        pure $ IntegerLiteral v (mayL /= "")
+    _ -> throwError "parse error"
+  where
+    '0' : _b : inp = BSLC.unpack $ BSLC.take l xs
