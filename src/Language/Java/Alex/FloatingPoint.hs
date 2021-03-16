@@ -93,7 +93,7 @@ hexadecimalFloatingPointLiteral = do
   sig <- hexSignificand
   binExpon <- binaryExponent
   let expon :: Scientific
-      expon = 2 ^ binExpon
+      expon = if binExpon >= 0 then 2 ^ binExpon else 1 / (2 ^ (- binExpon))
   isDouble <- option True floatTypeSuffix
   pure (sig * expon, isDouble)
   where

@@ -10,6 +10,7 @@ module Language.Java.Alex.LexerSpec where
 
 import Control.Monad
 import Data.Either
+import Data.Scientific
 import Data.String
 import Language.Java.Alex.Token
 import Language.Java.Alex.Wrapper
@@ -156,6 +157,21 @@ spec = do
         parseOk "1234f" [float 1234]
 
     describe "HexadecimalFloatingPointLiteral" $ do
-      -- TODO: improve test coverage.
-      specify "examples" $
-        parseOk "0xAABB.CDEp12" [double 1.79027166e8]
+      let hexAux :: Integer -> Int -> Int -> Scientific
+          hexAux hSignificand shift binExpon =
+            -- note that shift must be non-negative.
+            fromInteger hSignificand * (1 / 16 ^ shift) * expon
+            where
+              expon = if binExpon >= 0 then 2 ^ binExpon else 1 / (2 ^ (- binExpon))
+
+      describe "HexSignificand BinaryExponent [FloatTypeSuffix]" $ do
+        specify "HexSignificand = HexNumeral [.]" $ do
+          parseOk "0XC0FFEEP-32" [double $ hexAux 0xC0FFEE 0 (-32)]
+          parseOk "0x1234.p+5" [double $ hexAux 0x1234 0 5]
+          parseOk "0xDEAD____BEEF.p0f" [float $ hexAux 0xDEADBEEF 0 0]
+          parseOk "0xC_D_E.p1_2D" [double $ hexAux 0xCDE 0 12]
+
+        specify "HexSignificand = 0X / 0x [HexDigits] . HexDigits" $ do
+          parseOk "0xAABB.CDEp12" [double $ hexAux 0xAABBCDE 3 12]
+          parseOk "0X.AC01Dp+3f" [float $ hexAux 0xAC01D 5 3]
+          parseOk "0X.66_77_88P-54D" [double $ hexAux 0x667788 6 (-54)]
