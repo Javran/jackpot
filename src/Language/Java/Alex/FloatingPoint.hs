@@ -62,7 +62,7 @@ decimalFloatingPointLiteral = do
        afterDot <- option "0" digits
        [(afd, "")] <- pure $ readDec @Integer $ afterDot
        let fracPart :: Scientific
-           fracPart = fromInteger afd / (10 ^ length afterDot)
+           fracPart = scientific afd (- length afterDot)
        pure (intPart + fracPart))
       +++ (do
              -- <dot> <after>
@@ -70,7 +70,7 @@ decimalFloatingPointLiteral = do
              afterDot <- option "0" digits
              [(afd, "")] <- pure $ readDec @Integer $ afterDot
              let fracPart :: Scientific
-                 fracPart = fromInteger afd / (10 ^ length afterDot)
+                 fracPart = scientific afd (- length afterDot)
              pure fracPart)
       +++ (do
              -- <before>
@@ -82,11 +82,8 @@ decimalFloatingPointLiteral = do
   decExpon <- option 0 exponentPart
   let expon :: Scientific
       expon =
-        -- note that `(^)` is only supposed to work on non-negative exponents.
-        -- TODO: we should probably use the smart constructor here.
-        if decExpon >= 0
-          then 10 ^ decExpon
-          else 1 / (10 ^ (- decExpon))
+        -- TODO: this is an Integer to Int conversion, which might overflow
+        scientific 1 (fromIntegral decExpon)
   isDouble <- option True floatTypeSuffix
   pure (sig * expon, isDouble)
   where
