@@ -117,26 +117,45 @@ spec = do
   describe "FloatingPointLiteral" $ do
     let float v = FloatingPointLiteral v False
         double v = FloatingPointLiteral v True
-    -- TODO: improve test coverage.
-    specify "spec examples" $ do
-      parseAll
-        "1e1f 2.f .3f 0f 3.14f 6.022137e+23f \
-        \ 1e1 2. .3 0.0 3.14 1e-9d 1e137"
-        `shouldBe` Right
-          [ float 1e1
-          , float 2
-          , float 0.3
-          , float 0
-          , float 3.14
-          , float 6.022137e+23
-          , double 1e1
-          , double 2
-          , double 0.3
-          , double 0
-          , double 3.14
-          , double 1e-9
-          , double 1e137
-          ]
+    describe "DecimalFloatingPointLiteral" $ do
+      specify "Digits . [Digits] [ExponentPart] [FloatTypeSuffix]" $ do
+        parseOk "1234." [double 1234]
+        parseOk "1234.56" [double 1234.56]
+        parseOk "1234e-2" [double 1234e-2]
+        parseOk "4e+8" [double 4e8]
+        parseOk "14E8" [double 14e8]
+        parseOk "14f" [float 14]
+        parseOk "8899d" [double 8899]
+        parseOk "1122.3344E+55f" [float 1122.3344e55]
+        parseOk "1__12__2.3_34_4E+5___5D" [double 1122.3344e55]
+        parseFail "_1__12__2.3_34_4E+5___5D"
+        parseFail "1_.33E+55D"
+        parseFail "1._33E+55D"
+        parseFail "1.33E+55_D"
+        parseOk "6.022137e+23f" [float 6.022137e23]
+
+      specify ". Digits [ExponentPart] [FloatTypeSuffix]" $ do
+        parseOk ".1_3_5" [double 0.135]
+        parseOk ".4e1" [double 0.4e1]
+        parseOk ".24e+1" [double 0.24e1]
+        parseOk ".33E-7" [double 0.33e-7]
+        parseOk ".33E-7__7" [double 0.33e-77]
+        parseOk ".789f" [float 0.789]
+        parseOk ".789F" [float 0.789]
+        parseOk ".789d" [double 0.789]
+        parseOk ".789D" [double 0.789]
+        parseOk ".123e-45d" [double 0.123e-45]
+
+      specify "Digits ExponentPart [FloatTypeSuffix]" $ do
+        parseOk "123e3" [double 123e3]
+        parseOk "34e-2" [double 34e-2]
+        parseOk "22e+33F" [float 22e33]
+
+      specify "Digits [ExponentPart] FloatTypeSuffix" $ do
+        parseOk "10d" [double 10]
+        parseOk "1234f" [float 1234]
+
     describe "HexadecimalFloatingPointLiteral" $ do
+      -- TODO: improve test coverage.
       specify "examples" $
         parseOk "0xAABB.CDEp12" [double 1.79027166e8]
