@@ -82,7 +82,8 @@ decimalFloatingPointLiteral = do
   decExpon <- option 0 exponentPart
   let expon :: Scientific
       expon =
-        -- for whatever reason "^ <negative number>" is a runtime exception for Scientific.
+        -- note that `(^)` is only supposed to work on non-negative exponents.
+        -- TODO: we should probably use the smart constructor here.
         if decExpon >= 0
           then 10 ^ decExpon
           else 1 / (10 ^ (- decExpon))
