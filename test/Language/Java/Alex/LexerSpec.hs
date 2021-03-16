@@ -34,6 +34,14 @@ spec = do
     specify "BooleanLiteral" $
       parseOk "true false" $ BooleanLiteral <$> [True, False]
 
+  {-
+    TODO: Java spec requires an out-of-range literal to be
+    identified as compliation error,
+    which is not yet implemented here.
+
+    We'll go back and revisit how to implement that once we
+    having some notion of "irecoverable failure" available.
+   -}
   describe "IntegerLiteral" $ do
     let int v = IntegerLiteral v False
         long v = IntegerLiteral v True
