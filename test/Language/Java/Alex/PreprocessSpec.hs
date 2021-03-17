@@ -1,9 +1,9 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module Language.Java.Alex.UnicodeEscapeSpec where
+module Language.Java.Alex.PreprocessSpec where
 
 import Data.Char
-import Language.Java.Alex.UnicodeEscape
+import Language.Java.Alex.Preprocess
 import Test.Hspec
 import Text.RawString.QQ
 

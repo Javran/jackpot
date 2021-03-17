@@ -1,4 +1,4 @@
-module Language.Java.Alex.UnicodeEscape where
+module Language.Java.Alex.Preprocess where
 
 {-
   This technically has nothing to do with Alex,
