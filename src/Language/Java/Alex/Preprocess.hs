@@ -37,7 +37,20 @@ unicodeEscapeP =
                   pure $ drop 1 ss <> [chr v])
          <++ munch1 (/= '\\'))
 
-unicodeEscape :: String -> Maybe String
-unicodeEscape raw = case readP_to_S (unicodeEscapeP <* eof) raw of
+runReadP :: ReadP a -> String -> Maybe a
+runReadP p raw = case readP_to_S (p <* eof) raw of
   [(v, "")] -> Just v
   _ -> Nothing
+
+unicodeEscape :: String -> Maybe String
+unicodeEscape = runReadP unicodeEscapeP
+
+lineTerminatorNormP :: ReadP String
+lineTerminatorNormP =
+  concat <$> many (lineTerms <++ munch1 (`notElem` "\r\n"))
+  where
+    lineTerms = "\n" <$ (char '\n' <++ (char '\r' <* optional (char '\n')))
+
+-- TODO: test
+lineTerminatorNorm :: String -> Maybe String
+lineTerminatorNorm = runReadP lineTerminatorNormP
