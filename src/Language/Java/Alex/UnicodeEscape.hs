@@ -19,7 +19,6 @@ import Data.Char
 import Numeric
 import Text.ParserCombinators.ReadP
 
-
 unicodeEscapeP :: ReadP String
 unicodeEscapeP =
   concat
