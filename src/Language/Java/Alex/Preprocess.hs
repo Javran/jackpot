@@ -65,3 +65,6 @@ lineTerminatorNormP =
 
 lineTerminatorNorm :: String -> Maybe String
 lineTerminatorNorm = runReadP lineTerminatorNormP
+
+preprocess :: String -> Maybe String
+preprocess = unicodeEscape >=> lineTerminatorNorm
