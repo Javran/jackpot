@@ -49,8 +49,19 @@ lineTerminatorNormP :: ReadP String
 lineTerminatorNormP =
   concat <$> many (lineTerms <++ munch1 (`notElem` "\r\n"))
   where
-    lineTerms = "\n" <$ (char '\n' <++ (char '\r' <* optional (char '\n')))
+    lineTerms =
+      "\n"
+        <$ (void (char '\n')
+              <++ (do
+                     _ <- char '\r'
+                     -- a bit subtle here,
+                     -- as "optional" might create an unwanted branch,
+                     -- if we can find a '\n' following it,
+                     -- the decision should commit.
+                     xs <- look
+                     case xs of
+                       '\n' : _ -> get >> pure ()
+                       _ -> pure ()))
 
--- TODO: test
 lineTerminatorNorm :: String -> Maybe String
 lineTerminatorNorm = runReadP lineTerminatorNormP

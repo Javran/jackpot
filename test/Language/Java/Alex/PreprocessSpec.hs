@@ -8,7 +8,7 @@ import Test.Hspec
 import Text.RawString.QQ
 
 spec :: Spec
-spec =
+spec = do
   describe "unicodeEscape" $ do
     let parseOk inp expected = unicodeEscape inp `shouldBe` Just expected
         parseSame s = parseOk s s
@@ -43,3 +43,14 @@ spec =
       parseFail [r|\\\uuuu|]
       parseFail [r|AAA\uABG1|]
       parseFail [r|\uABCD\uAAVE|]
+  describe "lineTerminatorNorm" $ do
+    let parseOk inp expected = lineTerminatorNorm inp `shouldBe` Just expected
+    specify "examples" $ do
+      parseOk "ABCD" "ABCD"
+      parseOk "\n\n\n" "\n\n\n"
+      parseOk "\r\r\r\r" "\n\n\n\n"
+      parseOk "\n\r" "\n\n"
+      parseOk "\r\n" "\n"
+      parseOk
+        "CDEF\r\nA\n\rB\r\r\nVCCCC\r\r\n\n!!\r\rGH"
+        "CDEF\nA\n\nB\n\nVCCCC\n\n\n!!\n\nGH"
