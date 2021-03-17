@@ -4,7 +4,7 @@ module Language.Java.Alex.Wrapper where
 
 import Language.Java.Alex.Token
 import Language.Java.Alex.Lexer
-import qualified Data.ByteString.Lazy as BSL
+import Language.Java.Alex.Preprocess
 
 allTokens :: Alex [Token]
 allTokens =
@@ -12,5 +12,7 @@ allTokens =
     EndOfFile -> pure []
     x -> (x :) <$> allTokens
 
-parseAll :: BSL.ByteString -> Either String [Token]
-parseAll xs = runAlex xs allTokens
+parseAll :: String -> Either String [Token]
+parseAll xs = runAlex ys allTokens
+  where
+    Just ys = preprocess xs

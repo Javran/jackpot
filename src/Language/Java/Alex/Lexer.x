@@ -13,7 +13,7 @@ import Language.Java.Alex.Token
 
 }
 
-%wrapper "monad-bytestring"
+%wrapper "monad"
 
 $digit = 0-9
 $hexdigit = [0-9a-fA-F]
@@ -45,33 +45,33 @@ tokens :-
   -- IntegerLiteral
   --   DecimalIntegerLiteral
   (0|(1-9)@Digits?|(1-9)_+@Digits)@IntegerTypeSuffix?
-    { \(_, ch, xs, _) l -> getDecimalOrHex ch xs l }
+    { \(_, ch, _, xs) l -> getDecimalOrHex ch xs l }
   --   HexIntegerLiteral
   @HexNumeral@IntegerTypeSuffix?
-    { \(_, ch, xs, _) l -> getDecimalOrHex ch xs l }
+    { \(_, ch, _, xs) l -> getDecimalOrHex ch xs l }
   --   OctalIntegerLiteral
   0(0-7|0-7([_0-7])*0-7)@IntegerTypeSuffix?
-    { \(_, ch, xs, _) l -> getOctal ch xs l }
+    { \(_, ch, _, xs) l -> getOctal ch xs l }
   --   BinaryIntegerLiteral
   0[bB](0-1|0-1([_0-1])*0-1)@IntegerTypeSuffix?
-    { \(_, ch, xs, _) l -> getBinary ch xs l }
+    { \(_, ch, _, xs) l -> getBinary ch xs l }
 
   -- FloatingPointLiteral
   --   DecimalFloatingPointLiteral
   @Digits\.@Digits?@ExponentPart?@FloatTypeSuffix?
-    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
   --   DecimalFloatingPointLiteral
   \.@Digits@ExponentPart?@FloatTypeSuffix?
-    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
   --   DecimalFloatingPointLiteral
   @Digits@ExponentPart@FloatTypeSuffix?
-    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
   --   DecimalFloatingPointLiteral
   @Digits@ExponentPart?@FloatTypeSuffix
-    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
   --  HexadecimalFloatingPointLiteral
   @HexSignificand@BinaryExponent@FloatTypeSuffix?
-    { \(_, ch, xs, _) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
 
 {
 
