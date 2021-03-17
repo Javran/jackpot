@@ -16,3 +16,31 @@ module Language.Java.Alex.UnicodeEscape where
   preprocessing.
 
  -}
+
+import Control.Monad
+import Data.Char
+import Numeric
+import Text.ParserCombinators.ReadP
+
+unicodeEscapeP :: ReadP String
+unicodeEscapeP =
+  concat
+    <$> many
+      ((do
+          ss <- munch1 (== '\\')
+          if even (length ss)
+            then pure ss -- not eligible
+            else do
+              us <- munch (== 'u')
+              if null us
+                then pure ss
+                else do
+                  ds <- replicateM 4 (satisfy isHexDigit)
+                  [(v, "")] <- pure $ readHex ds
+                  pure $ drop 1 ss <> [chr v])
+         <++ munch1 (/= '\\'))
+
+unicodeEscape :: String -> Maybe String
+unicodeEscape raw = case readP_to_S (unicodeEscapeP <* eof) raw of
+  [(v, "")] -> Just v
+  _ -> Nothing
