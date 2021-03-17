@@ -46,6 +46,7 @@ tests:
       - jackpot
       - QuickCheck
       - hspec
+      - raw-strings-qq
     ghc-options:
       - -Wall
       - -O2
