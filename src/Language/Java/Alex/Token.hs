@@ -4,7 +4,6 @@ module Language.Java.Alex.Token where
 
 import Control.Monad.Except
 import Data.Char
-import Data.Int
 import Data.Scientific
 import Language.Java.Alex.FloatingPoint (floatingPointLiteralS)
 import Numeric
@@ -25,13 +24,7 @@ todo (_, _, _, xs) l = pure $ Todo (take l xs)
   TODO: To be compliant with Java spec
   we need to rule out out-of-bound integers at this stage,
   however it won't be as straightforward due to the interaction with
-  prefixing "-" unary operation.
-
-  TODO: probably the problem lies in the fact that we don't have
-  a distinction on whether an error is recoverable - if we are parsing an int,
-  and gets an error because the integer doesn't fit or there are invalid digits,
-  we should generate an error that is not recoverable rather than proceeding to try other things.
-
+  prefixing "-" unary operator.
  -}
 
 parseByRead :: MonadError String m => ReadS Integer -> Char -> String -> m Token
@@ -44,6 +37,14 @@ parseByRead _ prevChar _
      invalid octals are tokenized as two literals: (0 and then 8) or (01234 and then 89).
      To prevent this from happening, decimal tokenizer should check whether previous char is a digit
      and reject if that is indeed the case.
+
+     TODO: well, actually what happened was not a recover at failure -
+     of course `[0-7}+` can only match "01234" part.
+     what we should do is to instead accept a wider range of input
+     and perform extra verifications in Haskell - as regex doesn't have much
+     in terms of error reporting, it's more helpful and expressive to do those validations
+     on Haskell's side.
+
     -}
     throwError "integer literal cannot directly follow any digit"
 parseByRead reader _ inp =
