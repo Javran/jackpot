@@ -19,6 +19,15 @@ $digit = 0-9
 $hexdigit = [0-9a-fA-F]
 $alpha = [a-zA-Z]
 
+-- WhiteSpace in Java is:
+-- SP (\ ) HT (\t) FF (\f)
+-- CR (\r) LF (\n) but $white includes VT (\v) and we need to exclude that.
+$JavaWhiteSpace = $white # \v
+
+-- Note that Alex excludes `\n` by default, so we have to be explicit about it.
+$NotStar = [.\n] # \*
+$NotStarNotSlash = $NotStar # \/
+
 @Digits = $digit|$digit($digit|_)*$digit
 @IntegerTypeSuffix = [lL]
 @HexDigits = $hexdigit|$hexdigit($hexdigit|_)*$hexdigit
@@ -31,9 +40,14 @@ $alpha = [a-zA-Z]
 
 tokens :-
 
-  $white+
+  $JavaWhiteSpace+
     ;
+
+  -- EndOfLineComment
   "//".*
+    ;
+  -- TraditionalComment
+  "/*"$NotStar*\*(\**$NotStarNotSlash$NotStar*\*(\*)*|\*)*\/
     ;
   true
     { \_ _ -> pure (BooleanLiteral True) }

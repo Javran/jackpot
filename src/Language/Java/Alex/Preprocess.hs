@@ -45,6 +45,11 @@ runReadP p raw = case readP_to_S (p <* eof) raw of
 unicodeEscape :: String -> Maybe String
 unicodeEscape = runReadP unicodeEscapeP
 
+{-
+  Normalizes CR+LF / CR / LF to LF (\n).
+  This plays nicely with Alex since in Alex,
+  regular expression `.` means everything other than \n.
+ -}
 lineTerminatorNormP :: ReadP String
 lineTerminatorNormP =
   concat <$> many (lineTerms <++ munch1 (`notElem` "\r\n"))

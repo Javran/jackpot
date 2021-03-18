@@ -1,13 +1,13 @@
 {-# LANGUAGE BinaryLiterals #-}
 {-# LANGUAGE OverloadedStrings #-}
-
+{-# LANGUAGE QuasiQuotes #-}
 module Language.Java.Alex.LexerSpec where
 
 {-
   Note that this does not directly import Lexer but rather the Wrapper module,
   which is more convenient to work with.
  -}
-
+import Text.RawString.QQ
 import Control.Monad
 import Data.Either
 import Data.Scientific
@@ -27,12 +27,64 @@ parseFail raw =
 
 spec :: Spec
 spec = do
+  describe "whitespace" $ do
+    specify "SP HT LF FF CR" $
+      parseOk " \t\n\f\r" []
+    {-
+      Java spec does not mention about VT but it's in Alex's $white definition,
+      so we need to exclude that manually.
+     -}
+    specify "no VT" $ do
+      parseFail "\v"
+      parseFail " \t\n\f\r\v"
+
   describe "Boolean and Null literals" $ do
     specify "NullLiteral" $
       parseOk "null" [NullLiteral]
 
     specify "BooleanLiteral" $
       parseOk "true false" $ BooleanLiteral <$> [True, False]
+
+  describe "TraditionalComment" $ do
+    let n = NullLiteral
+        t = BooleanLiteral True
+        f = BooleanLiteral False
+    specify "example set #0" $ do
+      parseOk "null /**/" [n]
+      parseOk "null/**/" [n]
+
+      parseOk "/**/ null" [n]
+      parseOk "/* this comment /* // /** ends here: */ null" [n]
+      parseOk "/* null */ false /**/null// null" [f, n]
+      parseFail "/*****null"
+      parseFail " /*/"
+      parseFail "/*null*/ /*/"
+    specify "example set #1" $ do
+      parseFail "/*/null"
+      parseOk "/**/null" [n]
+      parseOk "/***/null" [n]
+      parseOk "/****/null" [n]
+      parseOk "/*****/null" [n]
+      parseOk "/******/null" [n]
+      parseOk "/***!***/null" [n]
+      parseOk "/***!****/null" [n]
+      parseOk "null/* * * * */null" [n, n]
+    specify "multiline" $ do
+      parseOk [r|
+                /*
+                 * comment
+                 */true
+                |] [t]
+      parseOk [r|true
+                /**********
+                 * comment
+                 **********/false
+                |] [t,f]
+      parseOk [r|null
+                /**********
+                 **********/
+                 false
+                |] [n,f]
 
   {-
     TODO: Java spec requires an out-of-range literal to be
