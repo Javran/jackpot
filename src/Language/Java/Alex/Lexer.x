@@ -47,6 +47,34 @@ tokens :-
   "//".*
     ;
   -- TraditionalComment
+  -- This is a tricky bit, the FSA from spec is actually easy to write:
+  --
+  --                       [^\*\/]
+  --                      /        \
+  --                     /          \
+  --                    v            ^
+  -- [start] --"/*"--> [0] --"*"--> [1] --"/"--> [accept]
+  --                  ^   v        ^   v
+  --                 /     \      /     \
+  --                 \     /      \     /
+  --                  [^\*]         "*"
+  -- Now the problem is how to translate this back to regex.
+  -- First let's get rid of two loopy bits, which we can add back later:
+  --
+  --                       [^\*\/]
+  --                      /        \
+  --                     /          \
+  --                    v            ^
+  -- [start] --"/*"--> [0] --"*"--> [1] --"/"--> [accept]
+  --
+  -- Note that if we expand this a bit:
+  -- + "/*" "*" "/" [accepted]
+  -- + "/*" "*" [^\*\/] "*" "/" [accepted]
+  -- + "/*" "*" [^\*\/] "*" [^\*\/] "*" "/" [accepted]
+  -- + ...
+  --
+  -- Spot the pattern: "/*" "*" ([^\*\/] "*")* "/"
+  -- Now if we add back loops that we ignored earlier, we get the final product below:
   "/*"$NotStar*\*(\**$NotStarNotSlash$NotStar*\*(\*)*|\*)*\/
     ;
   true
