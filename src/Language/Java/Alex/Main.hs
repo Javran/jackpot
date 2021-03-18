@@ -91,4 +91,10 @@ main = pure ()
   isJavaIdentifierPart:
     Total 128354, groups: 717
 
+  Note that from section 3.1 Unicode:
+
+  > Except for comments (§3.7), identifiers (§3.8, and the contents of character literals, string literals, and text blocks (§3.10.4, §3.10.5, §3.10.6), all input elements (§3.5) in a program are formed only from ASCII characters (or Unicode escapes (§3.3) which result in ASCII characters).
+
+  This provides a potential alternative that does not require printing out the full set in Lexer.x
+
  -}
