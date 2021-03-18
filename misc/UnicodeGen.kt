@@ -1,3 +1,7 @@
+// Data is generated with corretto-15
+
+import java.io.File
+
 val startCp = IntRange(0, 0x10FFFF).toList().filter { Character.isJavaIdentifierStart(it) }
 val partCp = IntRange(0, 0x10FFFF).toList().filter { Character.isJavaIdentifierPart(it) }
 
@@ -38,4 +42,6 @@ fun main() {
     val extras = partSet - startSet
     val partLit = group(extras.toList()).joinToString("") { rangeStr(it) }
     println("\$JavaIdentifierPart = [\$JavaIdentifierStart$partLit]")
+    File("/tmp/start.txt").writeText(startCp.toString())
+    File("/tmp/part.txt").writeText(partCp.toString())
 }

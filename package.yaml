@@ -14,6 +14,8 @@ dependencies:
 - bytestring
 - mtl
 - scientific
+- containers
+- file-embed
 
 library:
   source-dirs: src
