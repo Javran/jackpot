@@ -36,3 +36,59 @@ main = pure ()
   how should we deal with it?
 
  -}
+
+{-
+  Identifiers:
+
+  A "Java letter" is a character for which the method Character.isJavaIdentifierStart(int) returns true.
+  A "Java letter-or-digit" is a character for which the method Character.isJavaIdentifierPart(int) returns true.
+
+  - https://docs.oracle.com/javase/7/docs/api/java/lang/Character.html#isJavaIdentifierStart(int)
+
+    A character may start a Java identifier if and only if one of the following conditions is true:
+
+    + isLetter(codePoint) returns true
+    + getType(codePoint) returns LETTER_NUMBER
+    + the referenced character is a currency symbol (such as '$')
+    + the referenced character is a connecting punctuation character (such as '_').
+
+    A character is considered to be a letter if its general category type, provided by getType(codePoint), is any of the following:
+
+    + UPPERCASE_LETTER
+    + LOWERCASE_LETTER
+    + TITLECASE_LETTER
+    + MODIFIER_LETTER
+    + OTHER_LETTER
+
+  - https://docs.oracle.com/javase/7/docs/api/java/lang/Character.html#isJavaIdentifierPart(int)
+
+    A character may be part of a Java identifier if any of the following are true:
+
+    + it is a letter
+    + it is a currency symbol (such as '$')
+    + it is a connecting punctuation character (such as '_')
+    + it is a digit
+    + it is a numeric letter (such as a Roman numeral character)
+    + it is a combining mark
+    + it is a non-spacing mark
+    + isIdentifierIgnorable returns true for the character
+
+    isIdentifierIgnorable:
+
+    The following Unicode characters are ignorable in a Java identifier or a Unicode identifier:
+
+    + ISO control characters that are not whitespace
+    + '\u0000' through '\u0008'
+    + '\u000E' through '\u001B'
+    + '\u007F' through '\u009F'
+    + all characters that have the FORMAT general category value
+
+  Following results by manual evaluation: (a group is a consecutive range)
+
+  isJavaIdentifierStart:
+    Total 125393, groups: 606
+
+  isJavaIdentifierPart:
+    Total 128354, groups: 717
+
+ -}
