@@ -9,12 +9,63 @@ import Language.Java.Alex.FloatingPoint (floatingPointLiteralS)
 import Numeric
 
 data Token
-  = Todo String
+  = EndOfFile
+  | Todo String
   | BooleanLiteral Bool
   | IntegerLiteral Integer Bool {- whether IntegerTypeSuffix is present -}
   | FloatingPointLiteral Scientific Bool {- whether this is double (True) or float (False) -}
   | NullLiteral
-  | EndOfFile
+  | KwAbstract
+  | KwContinue
+  | KwFor
+  | KwNew
+  | KwSwitch
+  | KwAssert
+  | KwDefault
+  | KwIf
+  | KwPackage
+  | KwSynchronized
+  | KwBoolean
+  | KwDo
+  | KwGoto
+  | KwPrivate
+  | KwThis
+  | KwBreak
+  | KwDouble
+  | KwImplements
+  | KwProtected
+  | KwThrow
+  | KwByte
+  | KwElse
+  | KwImport
+  | KwPublic
+  | KwThrows
+  | KwCase
+  | KwEnum
+  | KwInstanceof
+  | KwReturn
+  | KwTransient
+  | KwCatch
+  | KwExtends
+  | KwInt
+  | KwShort
+  | KwTry
+  | KwChar
+  | KwFinal
+  | KwInterface
+  | KwStatic
+  | KwVoid
+  | KwClass
+  | KwFinally
+  | KwLong
+  | KwStrictfp
+  | KwVolatile
+  | KwConst
+  | KwFloat
+  | KwNative
+  | KwSuper
+  | KwWhile
+  | KwSymbolUnderscore
   deriving (Eq, Show)
 
 todo :: Applicative f => (a, b, c, String) -> Int -> f Token
