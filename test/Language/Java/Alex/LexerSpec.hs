@@ -1,13 +1,14 @@
 {-# LANGUAGE BinaryLiterals #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+
 module Language.Java.Alex.LexerSpec where
 
 {-
   Note that this does not directly import Lexer but rather the Wrapper module,
   which is more convenient to work with.
  -}
-import Text.RawString.QQ
+
 import Control.Monad
 import Data.Either
 import Data.Scientific
@@ -15,6 +16,7 @@ import Data.String
 import Language.Java.Alex.Token
 import Language.Java.Alex.Wrapper
 import Test.Hspec
+import Text.RawString.QQ
 import Text.Read
 
 parseOk :: String -> [Token] -> Expectation
@@ -69,22 +71,32 @@ spec = do
       parseOk "/***!***/null" [n]
       parseOk "/***!****/null" [n]
       parseOk "null/* * * * */null" [n, n]
+    specify "anything inside block comments" $
+      parseOk "true/* \v */false" [t, f]
+    specify "no nested comments" $
+      parseFail "/* no /* nesting */ */"
     specify "multiline" $ do
-      parseOk [r|
+      parseOk
+        [r|
                 /*
                  * comment
                  */true
-                |] [t]
-      parseOk [r|true
+                |]
+        [t]
+      parseOk
+        [r|true
                 /**********
                  * comment
                  **********/false
-                |] [t,f]
-      parseOk [r|null
+                |]
+        [t, f]
+      parseOk
+        [r|null
                 /**********
                  **********/
                  false
-                |] [n,f]
+                |]
+        [n, f]
 
   {-
     TODO: Java spec requires an out-of-range literal to be
