@@ -47,31 +47,32 @@ spec = do
 
     specify "BooleanLiteral" $
       parseOk "true false" $ BooleanLiteral <$> [True, False]
+  let int v = IntegerLiteral v False
+      long v = IntegerLiteral v True
 
   describe "TraditionalComment" $ do
     let n = NullLiteral
         t = BooleanLiteral True
         f = BooleanLiteral False
     specify "example set #0" $ do
-      parseOk "null /**/" [n]
-      parseOk "null/**/" [n]
-
-      parseOk "/**/ null" [n]
-      parseOk "/* this comment /* // /** ends here: */ null" [n]
+      parseOk "1 /**/" [int 1]
+      parseOk "2/**/" [int 2]
+      parseOk "/**/ 3" [int 3]
+      parseOk "/* this comment /* // /** ends here: */ 4" [int 4]
       parseOk "/* null */ false /**/null// null" [f, n]
       parseFail "/*****null"
       parseFail " /*/"
       parseFail "/*null*/ /*/"
     specify "example set #1" $ do
       parseFail "/*/null"
-      parseOk "/**/null" [n]
-      parseOk "/***/null" [n]
-      parseOk "/****/null" [n]
-      parseOk "/*****/null" [n]
-      parseOk "/******/null" [n]
-      parseOk "/***!***/null" [n]
-      parseOk "/***!****/null" [n]
-      parseOk "null/* * * * */null" [n, n]
+      parseOk "/**/2" [int 2]
+      parseOk "/***/3" [int 3]
+      parseOk "/****/4" [int 4]
+      parseOk "/*****/5" [int 5]
+      parseOk "/******/6" [int 6]
+      parseOk "/***!***/7" [int 7]
+      parseOk "/***!****/8" [int 8]
+      parseOk "9/* * * * */null" [int 9, n]
     specify "anything inside block comments" $
       parseOk "true/* \v */false" [t, f]
     specify "no nested comments" $
@@ -108,9 +109,6 @@ spec = do
     having some notion of "irecoverable failure" available.
    -}
   describe "IntegerLiteral" $ do
-    let int v = IntegerLiteral v False
-        long v = IntegerLiteral v True
-
     describe "DecimalIntegerLiteral" $ do
       specify "0" $
         parseOk "  0  " [int 0]
