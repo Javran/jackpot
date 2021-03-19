@@ -103,7 +103,7 @@ tokens :-
     { \(_, ch, _, xs) l -> getDecimalOrHex ch xs l }
   --   OctalIntegerLiteral
   0(0-7|0-7([_0-7])*0-7)@IntegerTypeSuffix?
-    { \(_, ch, _, xs) l -> getOctal ch xs l }
+    { \(_, ch, _, xs) l ->  getIntegerLiteral ch (take l xs) }
   --   BinaryIntegerLiteral
   0[bB](0-1|0-1([_0-1])*0-1)@IntegerTypeSuffix?
     { \(_, ch, _, xs) l -> getBinary ch xs l }

@@ -127,6 +127,8 @@ spec = do
         parseOk "1_2__34__5L" [long 12345]
         parseOk "54321l" [long 54321]
         parseFail "1_2_L"
+        parseOk "0l" [long 0]
+        parseOk "4L" [long 4]
 
     describe "HexIntegerLiteral" $ do
       specify "0x / 0X" $ do
@@ -171,6 +173,8 @@ spec = do
         parseOk "01_2__34__5L" [long 0o12345]
         parseOk "054321l" [long 0o54321]
         parseFail "0x1_2_L"
+        parseOk "01L" [long 1]
+        parseOk "03l" [long 3]
 
     describe "BinaryIntegerLiteral" $ do
       specify "0b / 0B" $ do

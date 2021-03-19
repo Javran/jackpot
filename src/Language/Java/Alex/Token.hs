@@ -146,30 +146,36 @@ intTypeSuffixP =
   (True <$ satisfy (`elem` "Ll"))
     <++ pure False
 
-decimalLitP :: ReadP (Integer, Bool)
-decimalLitP =
-  (do
-     {-
-       begin with non-zero digit and end with a digit.
-       accepts:
+{-
+  Parses a non-zero decimal integer literal
+ -}
+nonZeroDecimalIntegerLitP :: ReadP (Integer, Bool)
+nonZeroDecimalIntegerLitP = do
+  hd <- satisfy (\ch -> isDigit ch && ch /= '0')
+  tl <- munch (\ch -> isDigit ch || ch == '_')
+  guard $ null tl || isDigit (last tl)
+  [(v, "")] <- pure $ readDec (hd : filter (/= '_') tl)
+  suf <- intTypeSuffixP
+  pure (v, suf)
 
-       - single digit but not zero.
-       - >= 2 digits, underscore supported.
-
-      -}
-     hd <- satisfy (\ch -> isDigit ch && ch /= '0')
-     tl <- munch (\ch -> isDigit ch || ch == '_')
-     guard $ null tl || isDigit (last tl)
-     [(v, "")] <- pure $ readDec (hd : filter (/= '_') tl)
-     suf <- intTypeSuffixP
-     pure (v, suf))
+integerLitP :: ReadP (Integer, Bool)
+integerLitP =
+  nonZeroDecimalIntegerLitP
     <|> (do
            _ <- char '0'
+           xs <- munch (\ch -> isOctDigit ch || ch == '_')
+           v <-
+             if null xs
+               then pure 0 -- whether this is decimal or octal doesn't matter.
+               else do
+                 -- parse octal literal body
+                 [(t, "")] <- pure (readOct (filter (/= '_') xs))
+                 pure t
            suf <- intTypeSuffixP
-           pure (0, suf))
+           pure (v, suf))
 
 getIntegerLiteral :: MonadError String m => Char -> String -> m Token
-getIntegerLiteral prevCh = parseByRead' (readP_to_S (decimalLitP <* eof)) prevCh
+getIntegerLiteral prevCh = parseByRead' (readP_to_S (integerLitP <* eof)) prevCh
 
 -- TODO: reduce duplication
 parseByRead' :: MonadError String m => ReadS (Integer, Bool) -> Char -> String -> m Token
