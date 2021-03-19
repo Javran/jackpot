@@ -17,6 +17,7 @@ dependencies:
 - containers
 - file-embed
 - unordered-containers
+- split
 
 library:
   source-dirs: src

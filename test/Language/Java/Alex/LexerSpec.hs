@@ -298,3 +298,68 @@ spec = do
     specify "mix" $ do
       parseOk [r|"A\102C\u0044"|] [str "ABCD"]
       parseOk [r|"\n\r123\r"|] [str "\n\r123\r"]
+  describe "TextBlock" $ do
+    specify "spec examples" $ do
+      let parseOk' raw =
+            parseAll (fromString raw) `shouldSatisfy` isRight
+      parseOk'
+        [r|"""
+           winter"""|]
+      parseOk'
+        [r|"""
+           winter
+           """|]
+      parseOk'
+        [r|"""
+           Hi, "Bob"
+           """|]
+      parseOk'
+        [r|"""
+           Hi,
+            "Bob"
+           """|]
+      parseOk'
+        [r|"""
+           """|]
+      parseOk'
+        [r|"""
+           "
+           """|]
+      parseOk'
+        [r|"""
+           \\
+           """|]
+      parseOk'
+        [r|"""
+            "When I use a word," Humpty Dumpty said,
+            in rather a scornful tone, "it means just what I
+            choose it to mean - neither more nor less."
+            "The question is," said Alice, "whether you
+            can make words mean so many different things."
+            "The question is," said Humpty Dumpty,
+            "which is to be master - that's all."
+        """|]
+      parseFail
+        [r|"""
+            "When I use a word," Humpty Dumpty said,
+            in rather a scornful tone, "it means just what I
+            choose it to mean - neither more nor less."
+            "The question is," said Alice, "whether you
+            can make words mean so many different things."
+            "The question is," said Humpty Dumpty,
+            "which is to be master - that's all.""""|]
+      parseOk'
+        [r|"""
+            "When I use a word," Humpty Dumpty said,
+            in rather a scornful tone, "it means just what I
+            choose it to mean - neither more nor less."
+            "The question is," said Alice, "whether you
+            can make words mean so many different things."
+            "The question is," said Humpty Dumpty,
+            "which is to be master - that's all.\""""|]
+      parseOk'
+        [r|"""
+            String text = \"""
+                The quick brown fox jumps over the lazy dog
+            \""";
+            """|]
