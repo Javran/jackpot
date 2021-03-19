@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Language.Java.Alex.IdentifierChar where
+module Language.Java.Alex.PlatformFunction where
 
 import Data.Char
 import Data.FileEmbed
@@ -11,8 +11,9 @@ import Data.Ix
 {-
   The goal of this module is to implement a counterpart of following functions:
 
- - Character.isJavaIdentifierStart(int)
- - Character.isJavaIdentifierPart(int)
+  - Character.isJavaIdentifierStart(int)
+  - Character.isJavaIdentifierPart(int)
+  - (TODO) String.stripIndent
 
   as required by Java spec.
 
