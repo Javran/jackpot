@@ -16,6 +16,7 @@ dependencies:
 - scientific
 - containers
 - file-embed
+- unordered-containers
 
 library:
   source-dirs: src

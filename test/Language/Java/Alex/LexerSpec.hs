@@ -29,6 +29,7 @@ parseFail raw =
 
 spec :: Spec
 spec = do
+  let ident = Identifier
   describe "whitespace" $ do
     specify "SP HT LF FF CR" $
       parseOk " \t\n\f\r" []
@@ -122,7 +123,7 @@ spec = do
       specify "interleave with underscores" $ do
         parseOk "1__2__34__5" [int 12345]
         parseOk "12__34_____5" [int 12345]
-        parseFail "_12__34__5"
+        parseOk "_12__34__5" [ident "_12__34__5"]
       specify "IntegerTypeSuffix" $ do
         parseOk "1_2__34__5L" [long 12345]
         parseOk "54321l" [long 54321]
@@ -205,10 +206,10 @@ spec = do
         parseOk "8899d" [double 8899]
         parseOk "1122.3344E+55f" [float 1122.3344e55]
         parseOk "1__12__2.3_34_4E+5___5D" [double 1122.3344e55]
-        parseFail "_1__12__2.3_34_4E+5___5D"
+        parseOk "_1__12__2.3_34_4E+5___5D" [ident "_1__12__2", double 3.344e54]
         parseFail "1_.33E+55D"
         parseFail "1._33E+55D"
-        parseFail "1.33E+55_D"
+        parseOk "1.33E+55_D" [double 1.33e55, ident "_D"]
         parseOk "6.022137e+23f" [float 6.022137e23]
 
       specify ". Digits [ExponentPart] [FloatTypeSuffix]" $ do
@@ -251,3 +252,12 @@ spec = do
           parseOk "0xAABB.CDEp12" [double $ hexAux 0xAABBCDE 3 12]
           parseOk "0X.AC01Dp+3f" [float $ hexAux 0xAC01D 5 3]
           parseOk "0X.66_77_88P-54D" [double $ hexAux 0x667788 6 (-54)]
+  describe "Keyword or Identifier" $ do
+    specify "examples" $
+      parseOk
+        "_id _ throw byte final"
+        [Identifier "_id", KwSymbolUnderscore, KwThrow, KwByte, KwFinal]
+    specify "spec examples" $ do
+      let raw = "String i3 αρετη MAX_VALUE isLetterOrDigit"
+      parseOk raw $ fmap ident (words raw)
+

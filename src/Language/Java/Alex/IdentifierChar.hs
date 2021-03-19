@@ -5,9 +5,8 @@ module Language.Java.Alex.IdentifierChar where
 
 import Data.Char
 import Data.FileEmbed
-import qualified Data.IntSet as IS
+import qualified Data.HashSet as HS
 import Data.Ix
-
 
 {-
   The goal of this module is to implement a counterpart of following functions:
@@ -22,19 +21,22 @@ import Data.Ix
   We'll need to somehow keep track of Unicode 13 data - before that we cannot follow
   the description just by using counterpart functions in Haskell.
 
+  TODO: this is not actually being used right now - the slowdown is significant
+  even on small size inputs.
+
  -}
 
-javaIdentifierStarts :: IS.IntSet
-javaIdentifierStarts = IS.fromList $ read @[Int] $(embedStringFile "embed-data/start.txt")
+javaIdentifierStarts :: HS.HashSet Char
+javaIdentifierStarts = HS.fromList $ chr <$> read @[Int] $(embedStringFile "embed-data/start.txt")
 
 isJavaIdentifierStart :: Char -> Bool
-isJavaIdentifierStart ch = ord ch `IS.member` javaIdentifierStarts
+isJavaIdentifierStart ch = ch `HS.member` javaIdentifierStarts
 
-javaIdentifierParts :: IS.IntSet
-javaIdentifierParts = IS.fromList $ read @[Int] $(embedStringFile "embed-data/part.txt")
+javaIdentifierParts :: HS.HashSet Char
+javaIdentifierParts = HS.fromList $ chr <$> read @[Int] $(embedStringFile "embed-data/part.txt")
 
 isJavaIdentifierPart :: Char -> Bool
-isJavaIdentifierPart ch = ord ch `IS.member` javaIdentifierParts
+isJavaIdentifierPart ch = ch `HS.member` javaIdentifierParts
 
 {-
   A character may start a Java identifier if and only if one of the following conditions is true:

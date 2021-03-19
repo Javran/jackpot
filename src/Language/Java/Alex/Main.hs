@@ -4,6 +4,7 @@ module Language.Java.Alex.Main
 where
 
 import Data.Char
+
 javaKeywords :: [String]
 javaKeywords =
   [ "abstract"
@@ -59,13 +60,20 @@ javaKeywords =
   , "_"
   ]
 
-main :: IO ()
-main = mapM_ (putStrLn . toTok . tr) javaKeywords
- where
-  tr "_" = "symbolUnderscore"
-  tr x = x
+toTokenAlt :: String -> String
+toTokenAlt = toTok . tr
+  where
+    tr "_" = "symbolUnderscore"
+    tr x = x
+    toTok x = "Kw" <> [toUpper (head x)] <> tail x
 
-  toTok x = "  | Kw" <> [toUpper (head x)] <> tail x
+_mainGenToken :: IO ()
+_mainGenToken = mapM_ (putStrLn . ("  | " <>) . toTokenAlt) javaKeywords
+
+main :: IO ()
+main = mapM_ go javaKeywords
+  where
+    go kwRaw = putStrLn $ " , (" <> show kwRaw <> ", " <> toTokenAlt kwRaw <> ")"
 
 {-
   Latest spec seems to be:
