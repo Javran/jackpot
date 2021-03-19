@@ -99,8 +99,8 @@ tokens :-
   '[^'\\]'
     { mkTok getCharLiteral }
   --   EscapeSequence
-  '\\(.|\d{1,3})'
-    { todo }
+  '\\(.|[0-9]+)'
+    { mkTok getCharLiteral }
 
   -- IntegerLiteral
   --   DecimalIntegerLiteral

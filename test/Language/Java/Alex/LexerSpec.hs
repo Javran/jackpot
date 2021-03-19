@@ -266,3 +266,20 @@ spec = do
     specify "SingleCharacter" $ do
       parseOk [r|'r'|] [char 'r']
       parseOk [r|'!'|] [char '!']
+      parseFail [r|''|]
+      parseFail "'\n'"
+    specify "Supplementary characters" $
+      parseFail [r|'😹'|]
+    specify "EscapeSequence" $ do
+      parseOk [r|'\r'|] [char '\r']
+      parseOk [r|'\n'|] [char '\n']
+      parseOk [r|'\\'|] [char '\\']
+      parseOk [r|'\''|] [char '\'']
+      parseOk [r|'\s'|] [char ' ']
+      parseOk [r|'\0'|] [char '\0']
+      parseOk [r|'\01'|] [char '\1']
+      parseOk [r|'\002'|] [char '\2']
+      parseOk [r|'\101'|] [char 'A']
+      parseOk [r|'\377'|] [char '\o377']
+      parseFail [r|\08|]
+      parseFail [r|'\400'|]

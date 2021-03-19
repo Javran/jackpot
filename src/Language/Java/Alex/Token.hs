@@ -255,11 +255,36 @@ getKeywordOrIdentifier xs = case parseKeywordOrIdentifier xs of
 charLitP :: ReadP Char
 charLitP = do
   _ <- char '\''
-  ch <- satisfy (`notElem` "\'\\")
-  _ <- char '\''
-  let v = ord ch
-  guard $ v >= 0 && v <= 0xFFFF
-  pure ch
+  (do
+     ch <- satisfy (`notElem` "\'\\")
+     _ <- char '\''
+     let v = ord ch
+     guard $ v >= 0 && v <= 0xFFFF
+     pure ch)
+    <++ (do
+           -- EscapeSequence
+           _ <- char '\\'
+           let x <~ y = x <$ char y
+           v <-
+             '\b' <~ 'b'
+               <++ ' ' <~ 's'
+               <++ '\t' <~ 't'
+               <++ '\n' <~ 'n'
+               <++ '\f' <~ 'f'
+               <++ '\r' <~ 'r'
+               <++ '"' <~ '"'
+               <++ '\'' <~ '\''
+               <++ '\\' <~ '\\'
+               <++ octalEsc
+           _ <- char '\''
+           pure v)
+  where
+    octalEsc = do
+      xs <- munch1 isOctDigit
+      guard $ length xs <= 3
+      [(v, "")] <- pure (readOct xs)
+      guard $ v >= 0 && v <= (0xFF :: Int)
+      pure (chr v)
 
 getCharLiteral :: MonadError String m => String -> m Token
 getCharLiteral = parseByReadP (CharacterLiteral <$> charLitP)
