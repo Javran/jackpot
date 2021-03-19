@@ -260,14 +260,15 @@ spec = do
     specify "spec examples" $ do
       let raw = "String i3 αρετη MAX_VALUE isLetterOrDigit"
       parseOk raw $ fmap ident (words raw)
-
+  let char = CharacterLiteral
+      str = StringLiteral
   describe "CharacterLiteral" $ do
-    let char = CharacterLiteral
     specify "SingleCharacter" $ do
       parseOk [r|'r'|] [char 'r']
       parseOk [r|'!'|] [char '!']
       parseFail [r|''|]
       parseFail "'\n'"
+      parseFail [r|'\u000a'|]
     specify "Supplementary characters" $
       parseFail [r|'😹'|]
     specify "EscapeSequence" $ do
@@ -283,3 +284,19 @@ spec = do
       parseOk [r|'\377'|] [char '\o377']
       parseFail [r|\08|]
       parseFail [r|'\400'|]
+      parseFail [r|'|]
+  describe "StringLiteral" $ do
+    specify "simple" $ do
+      parseOk [r|"normal@string!"|] [str "normal@string!"]
+      {-
+        Unicode stuff: supplementary characters are not allowed
+        and surrogate pair should be used instead.
+       -}
+      parseOk [r|"\uD83D\uDE39"|] [str "\xd83d\xde39"]
+      parseFail [r|"😹"|]
+      parseFail "\"\n\""
+      parseFail [r|"\u000a"|]
+      parseFail [r|"unbalanced|]
+    specify "mix" $ do
+      parseOk [r|"A\102C\u0044"|] [str "ABCD"]
+      parseOk [r|"\n\r123\r"|] [str "\n\r123\r"]

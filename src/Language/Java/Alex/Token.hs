@@ -9,7 +9,7 @@ import qualified Data.Map.Strict as M
 import Data.Scientific
 import Language.Java.Alex.FloatingPoint (floatingPointLiteralS)
 import Numeric
-import Text.ParserCombinators.ReadP
+import Text.ParserCombinators.ReadP hiding (many)
 
 data Token
   = EndOfFile
@@ -252,32 +252,20 @@ getKeywordOrIdentifier xs = case parseKeywordOrIdentifier xs of
   Nothing -> throwError "Unrecognized keyword or identifer"
   Just t -> pure t
 
-charLitP :: ReadP Char
-charLitP = do
-  _ <- char '\''
-  (do
-     ch <- satisfy (`notElem` "\'\\")
-     _ <- char '\''
-     let v = ord ch
-     guard $ v >= 0 && v <= 0xFFFF
-     pure ch)
-    <++ (do
-           -- EscapeSequence
-           _ <- char '\\'
-           let x <~ y = x <$ char y
-           v <-
-             '\b' <~ 'b'
-               <++ ' ' <~ 's'
-               <++ '\t' <~ 't'
-               <++ '\n' <~ 'n'
-               <++ '\f' <~ 'f'
-               <++ '\r' <~ 'r'
-               <++ '"' <~ '"'
-               <++ '\'' <~ '\''
-               <++ '\\' <~ '\\'
-               <++ octalEsc
-           _ <- char '\''
-           pure v)
+escapeBodyP :: ReadP Char
+escapeBodyP = do
+  _ <- char '\\'
+  let x <~ y = x <$ char y
+  '\b' <~ 'b'
+    <++ ' ' <~ 's'
+    <++ '\t' <~ 't'
+    <++ '\n' <~ 'n'
+    <++ '\f' <~ 'f'
+    <++ '\r' <~ 'r'
+    <++ '"' <~ '"'
+    <++ '\'' <~ '\''
+    <++ '\\' <~ '\\'
+    <++ octalEsc
   where
     octalEsc = do
       xs <- munch1 isOctDigit
@@ -286,5 +274,31 @@ charLitP = do
       guard $ v >= 0 && v <= (0xFF :: Int)
       pure (chr v)
 
+charLitP :: ReadP Char
+charLitP =
+  char '\''
+    *> (do
+          ch <- satisfy (`notElem` "\'\\")
+          _ <- char '\''
+          let v = ord ch
+          guard $ v >= 0 && v <= 0xFFFF
+          pure ch)
+    <++ (escapeBodyP <* char '\'')
+
 getCharLiteral :: MonadError String m => String -> m Token
 getCharLiteral = parseByReadP (CharacterLiteral <$> charLitP)
+
+stringLitP :: ReadP String
+stringLitP =
+  char '\"'
+    *> many
+      ((do
+          ch <- satisfy (`notElem` "\"\\")
+          let v = ord ch
+          guard $ v >= 0 && v <= 0xFFFF
+          pure ch)
+         <++ escapeBodyP)
+      <* char '\"'
+
+getStringLiteral :: MonadError String m => String -> m Token
+getStringLiteral = parseByReadP (StringLiteral <$> stringLitP)

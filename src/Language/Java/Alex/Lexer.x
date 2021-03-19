@@ -48,6 +48,9 @@ $NumLitPart = [0-9A-Za-z_]
 @HexSignificand = @HexNumeral\.?|0[xX]@HexDigits?\.@HexDigits
 @BinaryExponent = [pP]@SignedInteger
 
+-- loose match, relies on Alex action.
+@EscapeBody = \\(.|[0-9]+)
+
 tokens :-
 
   $JavaWhiteSpace+
@@ -99,8 +102,12 @@ tokens :-
   '[^'\\]'
     { mkTok getCharLiteral }
   --   EscapeSequence
-  '\\(.|[0-9]+)'
+  "'"@EscapeBody"'"
     { mkTok getCharLiteral }
+
+  -- StringLiteral
+  \"([^\\\"]|@EscapeBody)*\"
+    { mkTok getStringLiteral }
 
   -- IntegerLiteral
   --   DecimalIntegerLiteral
