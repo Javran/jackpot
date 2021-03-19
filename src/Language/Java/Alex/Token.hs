@@ -2,17 +2,19 @@
 
 module Language.Java.Alex.Token where
 
+import Control.Applicative
 import Control.Monad.Except
 import Data.Char
 import Data.Scientific
 import Language.Java.Alex.FloatingPoint (floatingPointLiteralS)
 import Numeric
+import Text.ParserCombinators.ReadP
 
 data Token
   = EndOfFile
   | Todo String
   | BooleanLiteral Bool
-  | IntegerLiteral Integer Bool {- whether IntegerTypeSuffix is present -}
+  | IntegerLiteral Integer Bool {- whether IntegerTypeSuffix is present (True=Long) -}
   | FloatingPointLiteral Scientific Bool {- whether this is double (True) or float (False) -}
   | NullLiteral
   | KwAbstract
@@ -138,3 +140,60 @@ getFloatingPoint _ xs l = case floatingPointLiteralS inp of
   _ -> throwError "parse error"
   where
     inp = take l xs
+
+intTypeSuffixP :: ReadP Bool
+intTypeSuffixP =
+  (True <$ satisfy (`elem` "Ll"))
+    <++ pure False
+
+decimalLitP :: ReadP (Integer, Bool)
+decimalLitP =
+  (do
+     {-
+       begin with non-zero digit and end with a digit.
+       accepts:
+
+       - single digit but not zero.
+       - >= 2 digits, underscore supported.
+
+      -}
+     hd <- satisfy (\ch -> isDigit ch && ch /= '0')
+     tl <- munch (\ch -> isDigit ch || ch == '_')
+     guard $ null tl || isDigit (last tl)
+     [(v, "")] <- pure $ readDec (hd : filter (/= '_') tl)
+     suf <- intTypeSuffixP
+     pure (v, suf))
+    <|> (do
+           _ <- char '0'
+           suf <- intTypeSuffixP
+           pure (0, suf))
+
+getIntegerLiteral :: MonadError String m => Char -> String -> m Token
+getIntegerLiteral prevCh = parseByRead' (readP_to_S (decimalLitP <* eof)) prevCh
+
+-- TODO: reduce duplication
+parseByRead' :: MonadError String m => ReadS (Integer, Bool) -> Char -> String -> m Token
+parseByRead' _ prevChar _
+  | isDigit prevChar =
+    {-
+     This is weird case is necessary to handle parsing octal literals correctly:
+
+     Without special handling, things like "08" or "0123489", which is supposed to be
+     invalid octals are tokenized as two literals: (0 and then 8) or (01234 and then 89).
+     To prevent this from happening, decimal tokenizer should check whether previous char is a digit
+     and reject if that is indeed the case.
+
+     TODO: well, actually what happened was not a recover at failure -
+     of course `[0-7}+` can only match "01234" part.
+     what we should do is to instead accept a wider range of input
+     and perform extra verifications in Haskell - as regex doesn't have much
+     in terms of error reporting, it's more helpful and expressive to do those validations
+     on Haskell's side.
+
+    -}
+    throwError "integer literal cannot directly follow any digit"
+parseByRead' reader _ inp =
+  case reader $ filter (/= '_') inp of
+    [((v, f), "")] ->
+      pure $ IntegerLiteral v f
+    _ -> throwError "parse error"

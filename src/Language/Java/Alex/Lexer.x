@@ -97,7 +97,7 @@ tokens :-
   -- IntegerLiteral
   --   DecimalIntegerLiteral
   (0|(1-9)@Digits?|(1-9)_+@Digits)@IntegerTypeSuffix?
-    { \(_, ch, _, xs) l -> getDecimalOrHex ch xs l }
+    { \(_, ch, _, xs) l -> getIntegerLiteral ch (take l xs) }
   --   HexIntegerLiteral
   @HexNumeral@IntegerTypeSuffix?
     { \(_, ch, _, xs) l -> getDecimalOrHex ch xs l }
