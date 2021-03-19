@@ -113,23 +113,6 @@ parseByRead reader _ inp =
   Answer: '\n', according to:
   https://github.com/simonmar/alex/blob/35f07a1c272c6b3aace858c2b1b0c427a1d89e67/data/AlexWrappers.hs#L201
  -}
-getDecimalOrHex :: MonadError String m => Char -> String -> Int -> m Token
-getDecimalOrHex prevCh xs l =
-  parseByRead reads prevCh inp
-  where
-    inp = take l xs
-
-getOctal :: MonadError String m => Char -> String -> Int -> m Token
-getOctal prevCh xs l =
-  parseByRead reads prevCh ("0o" <> filter (/= '_') inp)
-  where
-    '0' : inp = take l xs
-
-getBinary :: MonadError String m => Char -> String -> Int -> m Token
-getBinary prevCh xs l = parseByRead reader prevCh inp
-  where
-    reader = readInt 2 (`elem` "01") (\ch -> ord ch - ord '0')
-    '0' : _b : inp = take l xs
 
 getFloatingPoint :: MonadError String m => Char -> String -> Int -> m Token
 getFloatingPoint prevChar _ _
@@ -141,9 +124,12 @@ getFloatingPoint _ xs l = case floatingPointLiteralS inp of
   where
     inp = take l xs
 
+oneOf :: [] Char -> ReadP Char
+oneOf xs = satisfy (`elem` xs)
+
 intTypeSuffixP :: ReadP Bool
 intTypeSuffixP =
-  (True <$ satisfy (`elem` "Ll"))
+  (True <$ oneOf "Ll")
     <++ pure False
 
 {-
@@ -158,21 +144,58 @@ nonZeroDecimalIntegerLitP = do
   suf <- intTypeSuffixP
   pure (v, suf)
 
+{-
+  Parses either 0 or an octal literal,
+  assuming a prefix '0' has been recognized.
+ -}
+zeroOrOctalIntegerLitP :: ReadP (Integer, Bool)
+zeroOrOctalIntegerLitP = do
+  xs <- munch (\ch -> isOctDigit ch || ch == '_')
+  v <-
+    if null xs
+      then pure 0 -- whether this is decimal or octal doesn't matter.
+      else do
+        -- parse octal literal body
+        [(t, "")] <- pure (readOct (filter (/= '_') xs))
+        pure t
+  suf <- intTypeSuffixP
+  pure (v, suf)
+
+{-
+  Parses a hex literal,
+  assuming a prefix "0x" or "0X" has been recognized.
+ -}
+hexIntegerLitP :: ReadP (Integer, Bool)
+hexIntegerLitP = do
+  hd <- satisfy isHexDigit
+  tl <- munch (\ch -> isHexDigit ch || ch == '_')
+  guard $ null tl || isHexDigit (last tl)
+  [(v, "")] <- pure $ readHex (hd : filter (/= '_') tl)
+  suf <- intTypeSuffixP
+  pure (v, suf)
+
+{-
+  Parses a binary literal,
+  assuming a prefix "0b" or "0B" has been recognized.
+ -}
+binaryIntegerLitP :: ReadP (Integer, Bool)
+binaryIntegerLitP = do
+  hd <- oneOf "01"
+  tl <- munch (`elem` "01_")
+  guard $ null tl || last tl /= '_'
+  let readBin = readInt 2 (`elem` "01") (\ch -> ord ch - ord '0')
+  [(v, "")] <- pure $ readBin (hd : filter (/= '_') tl)
+  suf <- intTypeSuffixP
+  pure (v, suf)
+
 integerLitP :: ReadP (Integer, Bool)
 integerLitP =
   nonZeroDecimalIntegerLitP
     <|> (do
            _ <- char '0'
-           xs <- munch (\ch -> isOctDigit ch || ch == '_')
-           v <-
-             if null xs
-               then pure 0 -- whether this is decimal or octal doesn't matter.
-               else do
-                 -- parse octal literal body
-                 [(t, "")] <- pure (readOct (filter (/= '_') xs))
-                 pure t
-           suf <- intTypeSuffixP
-           pure (v, suf))
+           (oneOf "xX" *> hexIntegerLitP)
+             <++ (oneOf "bB" *> binaryIntegerLitP)
+             <++ zeroOrOctalIntegerLitP)
 
 getIntegerLiteral :: MonadError String m => Char -> String -> m Token
 getIntegerLiteral prevCh = parseByRead' (readP_to_S (integerLitP <* eof)) prevCh
