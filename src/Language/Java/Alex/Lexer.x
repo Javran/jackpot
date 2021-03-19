@@ -88,11 +88,11 @@ tokens :-
   "/*"$NotStar*\*(\**$NotStarNotSlash$NotStar*\*(\*)*|\*)*\/
     ;
   true
-    { \_ _ -> pure (BooleanLiteral True) }
+    { mkTokConst (BooleanLiteral True) }
   false
-    { \_ _ -> pure (BooleanLiteral False) }
+    { mkTokConst (BooleanLiteral False) }
   null
-    { \_ _ -> pure NullLiteral }
+    { mkTokConst NullLiteral }
 
   -- CharacterLiteral
   --   SingleCharacter
@@ -107,32 +107,32 @@ tokens :-
   --     note that the regex below is not yet ready to be merged with others
   --     as it would interfere with floating point literals.
   [0-9][_0-9]*@IntegerTypeSuffix?
-    { \(_, ch, _, xs) l -> getIntegerLiteral @Alex ch (take l xs) }
+    { mkTok getIntegerLiteral }
   --   HexIntegerLiteral
   --   OctalIntegerLiteral
   --   BinaryIntegerLiteral
   0[bBxX]?$NumLitPart+@IntegerTypeSuffix?
-    { \(_, ch, _, xs) l -> getIntegerLiteral @Alex ch (take l xs) }
+    { mkTok getIntegerLiteral }
 
   -- FloatingPointLiteral
   --   DecimalFloatingPointLiteral
   @Digits\.@Digits?@ExponentPart?@FloatTypeSuffix?
-    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
+    { mkTok getFloatingPoint }
   --   DecimalFloatingPointLiteral
   \.@Digits@ExponentPart?@FloatTypeSuffix?
-    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
+    { mkTok getFloatingPoint }
   --   DecimalFloatingPointLiteral
   @Digits@ExponentPart@FloatTypeSuffix?
-    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
+    { mkTok getFloatingPoint }
   --   DecimalFloatingPointLiteral
   @Digits@ExponentPart?@FloatTypeSuffix
-    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
+    { mkTok getFloatingPoint }
   --  HexadecimalFloatingPointLiteral
   @HexSignificand@BinaryExponent@FloatTypeSuffix?
-    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
+    { mkTok getFloatingPoint }
 
   $JavaIdentifierStart$JavaIdentifierPart*
-    { \(_, _, _, xs) l -> getKeywordOrIdentifier (take l xs) }
+    { mkTok getKeywordOrIdentifier }
 {
 
 alexEOF :: Alex Token

@@ -77,6 +77,12 @@ data Token
 todo :: Applicative f => (a, b, c, String) -> Int -> f Token
 todo (_, _, _, xs) l = pure $ Todo (take l xs)
 
+mkTokConst :: Applicative m => Token -> a -> b -> m Token
+mkTokConst v _ _ = pure v
+
+mkTok :: Applicative f => (String -> f Token) -> (a, b, c, [Char]) -> Int -> f Token
+mkTok act (_, _, _, xs) l = act (take l xs)
+
 {-
   TODO: To be compliant with Java spec
   we need to rule out out-of-bound integers at this stage,
@@ -91,12 +97,10 @@ todo (_, _, _, xs) l = pure $ Todo (take l xs)
   https://github.com/simonmar/alex/blob/35f07a1c272c6b3aace858c2b1b0c427a1d89e67/data/AlexWrappers.hs#L201
  -}
 
-getFloatingPoint :: MonadError String m => Char -> String -> Int -> m Token
-getFloatingPoint _ xs l = case floatingPointLiteralS inp of
+getFloatingPoint :: MonadError String m => String -> m Token
+getFloatingPoint inp = case floatingPointLiteralS inp of
   [((s, d), "")] -> pure $ FloatingPointLiteral s d
   _ -> throwError "parse error"
-  where
-    inp = take l xs
 
 oneOf :: [] Char -> ReadP Char
 oneOf xs = satisfy (`elem` xs)
@@ -172,11 +176,11 @@ integerLitP =
              <++ (oneOf "bB" *> binaryIntegerLitP)
              <++ zeroOrOctalIntegerLitP)
 
-getIntegerLiteral :: MonadError String m => Char -> String -> m Token
-getIntegerLiteral prevCh = parseByRead (readP_to_S (integerLitP <* eof)) prevCh
+getIntegerLiteral :: MonadError String m => String -> m Token
+getIntegerLiteral = parseByRead (readP_to_S (integerLitP <* eof))
 
-parseByRead :: MonadError String m => ReadS (Integer, Bool) -> Char -> String -> m Token
-parseByRead reader _ inp =
+parseByRead :: MonadError String m => ReadS (Integer, Bool) -> String -> m Token
+parseByRead reader inp =
   case reader inp of
     [((v, f), "")] ->
       pure $ IntegerLiteral v f
