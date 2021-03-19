@@ -261,3 +261,8 @@ spec = do
       let raw = "String i3 αρετη MAX_VALUE isLetterOrDigit"
       parseOk raw $ fmap ident (words raw)
 
+  describe "CharacterLiteral" $ do
+    -- let char = CharacterLiteral
+    specify "SingleCharacter" $ do
+      parseOk [r|'r'|] [Todo "'r'"]
+      parseOk [r|'!'|] [Todo "'!'"]

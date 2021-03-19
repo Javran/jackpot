@@ -94,6 +94,13 @@ tokens :-
   null
     { \_ _ -> pure NullLiteral }
 
+  -- CharacterLiteral
+  --   SingleCharacter
+  '[^'\/]'
+    { todo }
+  --   EscapeSequence
+  '\/(.|\d{1,3})'
+    { todo }
 
   -- IntegerLiteral
   --   DecimalIntegerLiteral

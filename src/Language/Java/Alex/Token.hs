@@ -18,6 +18,8 @@ data Token
   | IntegerLiteral Integer Bool {- whether IntegerTypeSuffix is present (True=Long) -}
   | FloatingPointLiteral Scientific Bool {- whether this is double (True) or float (False) -}
   | NullLiteral
+  | CharacterLiteral Char
+  | StringLiteral String
   | KwAbstract
   | KwContinue
   | KwFor
@@ -81,14 +83,6 @@ todo (_, _, _, xs) l = pure $ Todo (take l xs)
   however it won't be as straightforward due to the interaction with
   prefixing "-" unary operator.
  -}
-
-parseByRead :: MonadError String m => ReadS Integer -> Char -> String -> m Token
-parseByRead reader _ inp =
-  case reader $ filter (/= '_') inp of
-    [(v, mayL)]
-      | mayL `elem` ["", "L", "l"] ->
-        pure $ IntegerLiteral v (mayL /= "")
-    _ -> throwError "parse error"
 
 {-
   Side note: what is the previous char even before Alex start to consume anything?
@@ -179,11 +173,10 @@ integerLitP =
              <++ zeroOrOctalIntegerLitP)
 
 getIntegerLiteral :: MonadError String m => Char -> String -> m Token
-getIntegerLiteral prevCh = parseByRead' (readP_to_S (integerLitP <* eof)) prevCh
+getIntegerLiteral prevCh = parseByRead (readP_to_S (integerLitP <* eof)) prevCh
 
--- TODO: reduce duplication
-parseByRead' :: MonadError String m => ReadS (Integer, Bool) -> Char -> String -> m Token
-parseByRead' reader _ inp =
+parseByRead :: MonadError String m => ReadS (Integer, Bool) -> Char -> String -> m Token
+parseByRead reader _ inp =
   case reader inp of
     [((v, f), "")] ->
       pure $ IntegerLiteral v f
