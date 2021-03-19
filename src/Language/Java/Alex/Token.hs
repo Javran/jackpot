@@ -155,6 +155,7 @@ zeroOrOctalIntegerLitP = do
     if null xs
       then pure 0 -- whether this is decimal or octal doesn't matter.
       else do
+        guard $ head xs /= '_' && last xs /= '_'
         -- parse octal literal body
         [(t, "")] <- pure (readOct (filter (/= '_') xs))
         pure t
@@ -222,7 +223,7 @@ parseByRead' _ prevChar _
     -}
     throwError "integer literal cannot directly follow any digit"
 parseByRead' reader _ inp =
-  case reader $ filter (/= '_') inp of
+  case reader inp of
     [((v, f), "")] ->
       pure $ IntegerLiteral v f
     _ -> throwError "parse error"

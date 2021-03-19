@@ -1,6 +1,7 @@
 {
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 
@@ -37,6 +38,11 @@ $NotStarNotSlash = $NotStar # \/
 -- to handle this properly.
 $JavaIdentifierStartLite = [\x24\x41-\x5A\x5F\x61-\x7A\x80-\x10ffff]
 $JavaIdentifierPartLite = [$JavaIdentifierStartLite\x00-\x08\x0E-\x1B\x30-\x39\x7F\x80-x10ffff]
+
+-- Characters that could be part of a number literal
+-- Note that this is intentionally boarder than the actual language.
+-- This allows us to handle actions with more informative error messages.
+$NumLitPart = [0-9A-Za-z_]
 
 @Digits = $digit|$digit($digit|_)*$digit
 @IntegerTypeSuffix = [lL]
@@ -96,35 +102,32 @@ tokens :-
 
   -- IntegerLiteral
   --   DecimalIntegerLiteral
-  (0|(1-9)@Digits?|(1-9)_+@Digits)@IntegerTypeSuffix?
-    { \(_, ch, _, xs) l -> getIntegerLiteral ch (take l xs) }
+  --     note that the regex below is not yet ready to be merged with others
+  --     as it would interfere with floating point literals.
+  [0-9][_0-9]*@IntegerTypeSuffix?
+    { \(_, ch, _, xs) l -> getIntegerLiteral @Alex ch (take l xs) }
   --   HexIntegerLiteral
-  @HexNumeral@IntegerTypeSuffix?
-    { \(_, ch, _, xs) l -> getIntegerLiteral ch (take l xs) }
   --   OctalIntegerLiteral
-  0(0-7|0-7([_0-7])*0-7)@IntegerTypeSuffix?
-    { \(_, ch, _, xs) l -> getIntegerLiteral ch (take l xs) }
   --   BinaryIntegerLiteral
-  0[bB](0-1|0-1([_0-1])*0-1)@IntegerTypeSuffix?
-    { \(_, ch, _, xs) l -> getIntegerLiteral ch (take l xs) }
-
+  0[bBxX]?$NumLitPart+@IntegerTypeSuffix?
+    { \(_, ch, _, xs) l -> getIntegerLiteral @Alex ch (take l xs) }
 
   -- FloatingPointLiteral
   --   DecimalFloatingPointLiteral
   @Digits\.@Digits?@ExponentPart?@FloatTypeSuffix?
-    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
   --   DecimalFloatingPointLiteral
   \.@Digits@ExponentPart?@FloatTypeSuffix?
-    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
   --   DecimalFloatingPointLiteral
   @Digits@ExponentPart@FloatTypeSuffix?
-    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
   --   DecimalFloatingPointLiteral
   @Digits@ExponentPart?@FloatTypeSuffix
-    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
   --  HexadecimalFloatingPointLiteral
   @HexSignificand@BinaryExponent@FloatTypeSuffix?
-    { \(_, ch, _, xs) l -> getFloatingPoint ch xs l }
+    { \(_, ch, _, xs) l -> getFloatingPoint @Alex ch xs l }
 
 {
 
