@@ -177,13 +177,13 @@ integerLitP =
              <++ zeroOrOctalIntegerLitP)
 
 getIntegerLiteral :: MonadError String m => String -> m Token
-getIntegerLiteral = parseByRead (readP_to_S (integerLitP <* eof))
+getIntegerLiteral = parseByReadP (uncurry IntegerLiteral <$> integerLitP)
 
-parseByRead :: MonadError String m => ReadS (Integer, Bool) -> String -> m Token
-parseByRead reader inp =
-  case reader inp of
-    [((v, f), "")] ->
-      pure $ IntegerLiteral v f
+parseByReadP :: MonadError String m => ReadP Token -> String -> m Token
+parseByReadP parser inp =
+  case readP_to_S (parser <* eof) inp of
+    [(tok, "")] ->
+      pure tok
     _ -> throwError "parse error"
 
 keywords :: M.Map String Token
@@ -251,3 +251,15 @@ getKeywordOrIdentifier :: MonadError String m => String -> m Token
 getKeywordOrIdentifier xs = case parseKeywordOrIdentifier xs of
   Nothing -> throwError "Unrecognized keyword or identifer"
   Just t -> pure t
+
+charLitP :: ReadP Char
+charLitP = do
+  _ <- char '\''
+  ch <- satisfy (`notElem` "\'\\")
+  _ <- char '\''
+  let v = ord ch
+  guard $ v >= 0 && v <= 0xFFFF
+  pure ch
+
+getCharLiteral :: MonadError String m => String -> m Token
+getCharLiteral = parseByReadP (CharacterLiteral <$> charLitP)

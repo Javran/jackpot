@@ -262,7 +262,7 @@ spec = do
       parseOk raw $ fmap ident (words raw)
 
   describe "CharacterLiteral" $ do
-    -- let char = CharacterLiteral
+    let char = CharacterLiteral
     specify "SingleCharacter" $ do
-      parseOk [r|'r'|] [Todo "'r'"]
-      parseOk [r|'!'|] [Todo "'!'"]
+      parseOk [r|'r'|] [char 'r']
+      parseOk [r|'!'|] [char '!']

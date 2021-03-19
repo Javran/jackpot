@@ -96,10 +96,10 @@ tokens :-
 
   -- CharacterLiteral
   --   SingleCharacter
-  '[^'\/]'
-    { todo }
+  '[^'\\]'
+    { mkTok getCharLiteral }
   --   EscapeSequence
-  '\/(.|\d{1,3})'
+  '\\(.|\d{1,3})'
     { todo }
 
   -- IntegerLiteral
