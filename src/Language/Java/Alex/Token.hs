@@ -81,25 +81,6 @@ todo (_, _, _, xs) l = pure $ Todo (take l xs)
  -}
 
 parseByRead :: MonadError String m => ReadS Integer -> Char -> String -> m Token
-parseByRead _ prevChar _
-  | isDigit prevChar =
-    {-
-     This is weird case is necessary to handle parsing octal literals correctly:
-
-     Without special handling, things like "08" or "0123489", which is supposed to be
-     invalid octals are tokenized as two literals: (0 and then 8) or (01234 and then 89).
-     To prevent this from happening, decimal tokenizer should check whether previous char is a digit
-     and reject if that is indeed the case.
-
-     TODO: well, actually what happened was not a recover at failure -
-     of course `[0-7}+` can only match "01234" part.
-     what we should do is to instead accept a wider range of input
-     and perform extra verifications in Haskell - as regex doesn't have much
-     in terms of error reporting, it's more helpful and expressive to do those validations
-     on Haskell's side.
-
-    -}
-    throwError "integer literal cannot directly follow any digit"
 parseByRead reader _ inp =
   case reader $ filter (/= '_') inp of
     [(v, mayL)]
@@ -115,9 +96,6 @@ parseByRead reader _ inp =
  -}
 
 getFloatingPoint :: MonadError String m => Char -> String -> Int -> m Token
-getFloatingPoint prevChar _ _
-  | isDigit prevChar =
-    throwError "floating point literal cannot directly follow any digit"
 getFloatingPoint _ xs l = case floatingPointLiteralS inp of
   [((s, d), "")] -> pure $ FloatingPointLiteral s d
   _ -> throwError "parse error"
@@ -203,25 +181,6 @@ getIntegerLiteral prevCh = parseByRead' (readP_to_S (integerLitP <* eof)) prevCh
 
 -- TODO: reduce duplication
 parseByRead' :: MonadError String m => ReadS (Integer, Bool) -> Char -> String -> m Token
-parseByRead' _ prevChar _
-  | isDigit prevChar =
-    {-
-     This is weird case is necessary to handle parsing octal literals correctly:
-
-     Without special handling, things like "08" or "0123489", which is supposed to be
-     invalid octals are tokenized as two literals: (0 and then 8) or (01234 and then 89).
-     To prevent this from happening, decimal tokenizer should check whether previous char is a digit
-     and reject if that is indeed the case.
-
-     TODO: well, actually what happened was not a recover at failure -
-     of course `[0-7}+` can only match "01234" part.
-     what we should do is to instead accept a wider range of input
-     and perform extra verifications in Haskell - as regex doesn't have much
-     in terms of error reporting, it's more helpful and expressive to do those validations
-     on Haskell's side.
-
-    -}
-    throwError "integer literal cannot directly follow any digit"
 parseByRead' reader _ inp =
   case reader inp of
     [((v, f), "")] ->
