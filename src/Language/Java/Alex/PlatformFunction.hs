@@ -15,7 +15,7 @@ import Data.List.Split
 
   - Character.isJavaIdentifierStart(int)
   - Character.isJavaIdentifierPart(int)
-  - (TODO) String.stripIndent
+  - String.stripIndent
 
   as required by Java spec.
 

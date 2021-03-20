@@ -14,6 +14,7 @@ main =
     [fp] -> do
       raw <- readFile fp
       print $ parseAll raw
+    _ -> error "unsupported"
 
 {-
   Latest spec seems to be:
@@ -40,8 +41,5 @@ main =
 
   - perform the initial Unicode scan as specified.
   - normalize CR+LF / CR / LF (here I choose to normalize to LF)
-
-  TODO: "3.5. Input Elements and Tokens" mentions about a potential control-z at the end,
-  how should we deal with it?
 
  -}

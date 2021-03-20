@@ -3,6 +3,32 @@
 For now this directory serves as internal documents addressing various bits of
 the implementation details.
 
+## Major parsing rounds
+
+A parsing round is conceptually a complete scan of input stream,
+whether stream elements are bytes, escaped characters or tokens.
+
+Keep that in mind however that we don't necessarily need to keep the
+complete stream of data available - one round might produce some data,
+which are then immediately consumed by next round.
+
+### Preprocessing
+
+This round performs `String`-based transformation to be compliation with "3.2. Lexical Translations".
+In particular,
+we performs Unicode Escape and Normalizes LineTerminators to `\n`,
+and Removes the optional ASCII `SUB` character, which is allowed at the end of input stream.
+
+### Lexer Execution
+
+This round performs lexical analysis via Alex-generated lexer code,
+regular expressions are recognized from this round, which in turn triggers `AlexAction`
+to produce tokens.
+
+### (Planned) Literal Bound Check
+
+This round rules out numeric literals that does not fit into their intended types.
+
 ## `Lexer.x` accepts a wider range of input that language itself
 
 This decision is intentional - we want the lexer to have a quick pass and
