@@ -71,5 +71,12 @@ lineTerminatorNormP =
 lineTerminatorNorm :: String -> Maybe String
 lineTerminatorNorm = runReadP lineTerminatorNormP
 
+dropLastSub :: String -> String
+dropLastSub "" = ""
+dropLastSub xs =
+  if last xs == '\x1a'
+    then init xs
+    else xs
+
 preprocess :: String -> Maybe String
-preprocess = unicodeEscape >=> lineTerminatorNorm
+preprocess = unicodeEscape >=> lineTerminatorNorm >=> pure . dropLastSub

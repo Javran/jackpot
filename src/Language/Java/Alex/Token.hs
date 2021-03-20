@@ -131,7 +131,6 @@ data Token
   | OpCaretEq
   | OpPercentEq
   | OpLtLtEq
-  | OptionalSub -- an optional Control-Z
   deriving (Eq, Show)
 
 todo :: Applicative f => (a, b, c, String) -> Int -> f Token

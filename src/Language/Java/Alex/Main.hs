@@ -1,10 +1,19 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Language.Java.Alex.Main
   ( main
   )
 where
 
+import Language.Java.Alex.Wrapper
+import System.Environment
+
 main :: IO ()
-main = pure ()
+main =
+  getArgs >>= \case
+    [fp] -> do
+      raw <- readFile fp
+      print $ parseAll raw
 
 {-
   Latest spec seems to be:

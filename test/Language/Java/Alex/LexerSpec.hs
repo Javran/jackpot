@@ -41,6 +41,11 @@ spec = do
       parseFail "\v"
       parseFail " \t\n\f\r\v"
 
+  describe "optional last SUB" $
+    specify "example" $ do
+      parseOk "[]\x1A" [SepLBracket,SepRBracket]
+      parseFail "[]\x1A\x1A"
+
   describe "Boolean and Null literals" $ do
     specify "NullLiteral" $
       parseOk "null" [NullLiteral]
