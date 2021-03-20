@@ -3,77 +3,8 @@ module Language.Java.Alex.Main
   )
 where
 
-import Data.Char
-
-javaKeywords :: [String]
-javaKeywords =
-  [ "abstract"
-  , "continue"
-  , "for"
-  , "new"
-  , "switch"
-  , "assert"
-  , "default"
-  , "if"
-  , "package"
-  , "synchronized"
-  , "boolean"
-  , "do"
-  , "goto"
-  , "private"
-  , "this"
-  , "break"
-  , "double"
-  , "implements"
-  , "protected"
-  , "throw"
-  , "byte"
-  , "else"
-  , "import"
-  , "public"
-  , "throws"
-  , "case"
-  , "enum"
-  , "instanceof"
-  , "return"
-  , "transient"
-  , "catch"
-  , "extends"
-  , "int"
-  , "short"
-  , "try"
-  , "char"
-  , "final"
-  , "interface"
-  , "static"
-  , "void"
-  , "class"
-  , "finally"
-  , "long"
-  , "strictfp"
-  , "volatile"
-  , "const"
-  , "float"
-  , "native"
-  , "super"
-  , "while"
-  , "_"
-  ]
-
-toTokenAlt :: String -> String
-toTokenAlt = toTok . tr
-  where
-    tr "_" = "symbolUnderscore"
-    tr x = x
-    toTok x = "Kw" <> [toUpper (head x)] <> tail x
-
-_mainGenToken :: IO ()
-_mainGenToken = mapM_ (putStrLn . ("  | " <>) . toTokenAlt) javaKeywords
-
 main :: IO ()
-main = mapM_ go javaKeywords
-  where
-    go kwRaw = putStrLn $ " , (" <> show kwRaw <> ", " <> toTokenAlt kwRaw <> ")"
+main = pure ()
 
 {-
   Latest spec seems to be:

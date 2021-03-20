@@ -29,9 +29,20 @@ library:
     - alex
 
 executables:
-  demo:
+  jackpot:
     main: Main.hs
-    source-dirs: exe
+    source-dirs: exe/jackpot
+    dependencies:
+      - jackpot
+    ghc-options:
+      - -Wall
+      - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+  util:
+    main: Main.hs
+    source-dirs: exe/util
     dependencies:
       - jackpot
     ghc-options:

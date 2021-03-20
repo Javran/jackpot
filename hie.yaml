@@ -2,7 +2,9 @@ cradle:
   stack:
     - path: "./src"
       component: "jackpot:lib"
-    - path: "./exe"
-      component: "jackpot:exe:demo"
+    - path: "./exe/jackpot"
+      component: "jackpot:exe:jackpot"
+    - path: "./exe/util"
+      component: "jackpot:exe:util"
     - path: "./test"
       component: "jackpot:test:hspec"
