@@ -8,6 +8,7 @@ import Data.Char
 import qualified Data.Map.Strict as M
 import Data.Scientific
 import Language.Java.Alex.FloatingPoint (floatingPointLiteralS)
+import Language.Java.Alex.PlatformFunction
 import Numeric
 import Text.ParserCombinators.ReadP hiding (many)
 
@@ -302,3 +303,22 @@ stringLitP =
 
 getStringLiteral :: MonadError String m => String -> m Token
 getStringLiteral = parseByReadP (StringLiteral <$> stringLitP)
+
+-- TODO: line continuation
+textBlockP :: ReadP String
+textBlockP =
+  (qqq *> munch (\ch -> isSpace ch && ch /= '\n') *> char '\n')
+    *> (stripIndent
+          <$> many
+            ((do
+                ch <- satisfy (/= '\\')
+                let v = ord ch
+                guard $ v >= 0 && v <= 0xFFFF
+                pure ch)
+               <++ escapeBodyP))
+      <* qqq
+  where
+    qqq = string "\"\"\""
+
+getTextBlock :: MonadError String m => String -> m Token
+getTextBlock = parseByReadP (StringLiteral <$> textBlockP)

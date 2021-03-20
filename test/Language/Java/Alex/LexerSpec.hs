@@ -300,36 +300,41 @@ spec = do
       parseOk [r|"\n\r123\r"|] [str "\n\r123\r"]
   describe "TextBlock" $ do
     specify "spec examples" $ do
-      let parseOk' raw =
-            parseAll (fromString raw) `shouldSatisfy` isRight
-      parseOk'
+      parseOk
         [r|"""
            winter"""|]
-      parseOk'
+        [str "winter"]
+      parseOk
         [r|"""
            winter
            """|]
-      parseOk'
+        [str "winter\n"]
+      parseOk
         [r|"""
            Hi, "Bob"
            """|]
-      parseOk'
+        [str "Hi, \"Bob\"\n"]
+      parseOk
         [r|"""
            Hi,
             "Bob"
            """|]
-      parseOk'
+        [str "Hi,\n \"Bob\"\n"]
+      parseOk
         [r|"""
            """|]
-      parseOk'
+        [str ""]
+      parseOk
         [r|"""
            "
            """|]
-      parseOk'
+        [str "\"\n"]
+      parseOk
         [r|"""
            \\
            """|]
-      parseOk'
+        [str "\\\n"]
+      parseOk
         [r|"""
             "When I use a word," Humpty Dumpty said,
             in rather a scornful tone, "it means just what I
@@ -339,6 +344,16 @@ spec = do
             "The question is," said Humpty Dumpty,
             "which is to be master - that's all."
         """|]
+        [ str
+            "    \"When I use a word,\" Humpty Dumpty said,\n\
+            \    in rather a scornful tone, \"it means just what I\n\
+            \    choose it to mean - neither more nor less.\"\n\
+            \    \"The question is,\" said Alice, \"whether you\n\
+            \    can make words mean so many different things.\"\n\
+            \    \"The question is,\" said Humpty Dumpty,\n\
+            \    \"which is to be master - that's all.\"\n\
+            \"
+        ]
       parseFail
         [r|"""
             "When I use a word," Humpty Dumpty said,
@@ -348,7 +363,7 @@ spec = do
             can make words mean so many different things."
             "The question is," said Humpty Dumpty,
             "which is to be master - that's all.""""|]
-      parseOk'
+      parseOk
         [r|"""
             "When I use a word," Humpty Dumpty said,
             in rather a scornful tone, "it means just what I
@@ -357,9 +372,22 @@ spec = do
             can make words mean so many different things."
             "The question is," said Humpty Dumpty,
             "which is to be master - that's all.\""""|]
-      parseOk'
+        [ str
+            "\"When I use a word,\" Humpty Dumpty said,\n\
+            \in rather a scornful tone, \"it means just what I\n\
+            \choose it to mean - neither more nor less.\"\n\
+            \\"The question is,\" said Alice, \"whether you\n\
+            \can make words mean so many different things.\"\n\
+            \\"The question is,\" said Humpty Dumpty,\n\
+            \\"which is to be master - that's all.\""
+        ]
+      parseOk
         [r|"""
             String text = \"""
                 The quick brown fox jumps over the lazy dog
             \""";
             """|]
+        [str "String text = \"\"\"\n\
+             \    The quick brown fox jumps over the lazy dog\n\
+             \\"\"\";\n"
+            ]

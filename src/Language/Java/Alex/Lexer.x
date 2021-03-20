@@ -100,7 +100,7 @@ tokens :-
   -- TextBlock
   -- see: misc/notes.md
   \"\"\"($NotDbQuoteNotSlash|\\(\"|\\|$NotDbQuoteNotSlash)|\"($NotDbQuoteNotSlash|\\(\"|\\|$NotDbQuoteNotSlash)|\"($NotDbQuoteNotSlash|\\(\"|\\|$NotDbQuoteNotSlash))))*\"\"\"
-    { todo }
+    { mkTok getTextBlock }
 
   -- IntegerLiteral
   --   DecimalIntegerLiteral

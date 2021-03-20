@@ -7,6 +7,8 @@ import Data.Char
 import Data.FileEmbed
 import qualified Data.HashSet as HS
 import Data.Ix
+import Data.List
+import Data.List.Split
 
 {-
   The goal of this module is to implement a counterpart of following functions:
@@ -101,3 +103,38 @@ _isIdentifierIgnorable ch =
     || gc == Format
   where
     gc = generalCategory ch
+
+stripIndent :: String -> String
+stripIndent raw = result
+  where
+    {-
+      First, the individual lines of this string are extracted.
+      note that `indivLines` is always non-empty.
+     -}
+    indivLines = splitOn "\n" raw
+    pairs :: [(String, String)]
+    pairs = fmap (span isSpace) indivLines
+    {-
+      Then, the minimum indentation (min) is determined as follows:
+      + For each non-blank line (as defined by isBlank()), the leading white space characters are counted.
+      + The leading white space characters on the last line are also counted even if blank.
+      The min value is the smallest of these counts.
+     -}
+    minIndent =
+      minimum $
+        fmap (length . fst) $
+          -- last line always counts
+          last pairs :
+          -- otherwise only non-blank lines count
+          filter (not . null . snd) (init pairs)
+    {-
+      For each non-blank line, min leading white space characters are removed,
+      and any trailing white space characters are removed.
+      Blank lines are replaced with the empty string.
+     -}
+    resultLines = fmap (dropWhileEnd isSpace . drop minIndent) indivLines
+
+    {-
+      Finally, the lines are joined into a new string, using the LF character "\n" (U+000A) to separate lines.
+     -}
+    result = intercalate "\n" resultLines
