@@ -253,10 +253,10 @@ getKeywordOrIdentifier xs = case parseKeywordOrIdentifier xs of
   Nothing -> throwError "Unrecognized keyword or identifer"
   Just t -> pure t
 
-escapeBodyP :: ReadP Char
-escapeBodyP = do
+mkEscapeBodyP :: ReadP r -> (Char -> r) -> ReadP r
+mkEscapeBodyP fallbackP done = do
   _ <- char '\\'
-  let x <~ y = x <$ char y
+  let x <~ y = done x <$ char y
   '\b' <~ 'b'
     <++ ' ' <~ 's'
     <++ '\t' <~ 't'
@@ -267,13 +267,17 @@ escapeBodyP = do
     <++ '\'' <~ '\''
     <++ '\\' <~ '\\'
     <++ octalEsc
+    <++ fallbackP
   where
     octalEsc = do
       xs <- munch1 isOctDigit
       guard $ length xs <= 3
       [(v, "")] <- pure (readOct xs)
       guard $ v >= 0 && v <= (0xFF :: Int)
-      pure (chr v)
+      pure (done $ chr v)
+
+escapeBodyP :: ReadP Char
+escapeBodyP = mkEscapeBodyP pfail id
 
 charLitP :: ReadP Char
 charLitP =
@@ -339,27 +343,7 @@ textBlockBodyP =
          <++ escapeBodyP')
   where
     escapeBodyP' :: ReadP String
-    escapeBodyP' = do
-      _ <- char '\\'
-      let x <~ y = [x] <$ char y
-      '\b' <~ 'b'
-        <++ ' ' <~ 's'
-        <++ '\t' <~ 't'
-        <++ '\n' <~ 'n'
-        <++ '\f' <~ 'f'
-        <++ '\r' <~ 'r'
-        <++ '"' <~ '"'
-        <++ '\'' <~ '\''
-        <++ '\\' <~ '\\'
-        <++ ("" <$ char '\n')
-        <++ octalEsc
-      where
-        octalEsc = do
-          xs <- munch1 isOctDigit
-          guard $ length xs <= 3
-          [(v, "")] <- pure (readOct xs)
-          guard $ v >= 0 && v <= (0xFF :: Int)
-          pure [chr v]
+    escapeBodyP' = mkEscapeBodyP ("" <$ char '\n') (: [])
 
 {-
   Quoting from spec:
