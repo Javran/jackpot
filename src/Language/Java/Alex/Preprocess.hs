@@ -48,7 +48,7 @@ unicodeEscape = runReadP unicodeEscapeP
 {-
   Normalizes CR+LF / CR / LF to LF (\n).
   This plays nicely with Alex since in Alex,
-  regular expression `.` means everything other than \n.
+  regular expression `.` means anything but \n.
  -}
 lineTerminatorNormP :: ReadP String
 lineTerminatorNormP =

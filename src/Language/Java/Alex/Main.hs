@@ -36,11 +36,3 @@ main = pure ()
   how should we deal with it?
 
  -}
-
-{-
-  Identifiers:
-
-  A "Java letter" is a character for which the method Character.isJavaIdentifierStart(int) returns true.
-  A "Java letter-or-digit" is a character for which the method Character.isJavaIdentifierPart(int) returns true.
-
- -}
