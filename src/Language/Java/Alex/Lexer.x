@@ -61,21 +61,7 @@ tokens :-
   "//".*
     ;
   -- TraditionalComment
-  -- The FSA from spec is actually easy to write:
-  --
-  --                       [^\*\/]
-  --                      /        \
-  --                     /          \
-  --                    v            ^
-  -- [start] --"/*"--> [0] --"*"--> [1] --"/"--> [accept]
-  --                  ^   v        ^   v
-  --                 /     \      /     \
-  --                 \     /      \     /
-  --                  [^\*]         "*"
-  --
-  -- Now we just need to translate this into regular expression.
-  -- which is done on: http://ivanzuzak.info/noam/webapps/fsm2regex/
-  -- see: misc/notes.md
+  -- See: [Regular expressions] section in docs/README.md
   \/\*($NotStarNotSlash|\/|\*\**$NotStarNotSlash)*\*\**\/
     ;
   true
@@ -98,7 +84,7 @@ tokens :-
     { mkTok getStringLiteral }
 
   -- TextBlock
-  -- see: misc/notes.md
+  -- See: [Regular expressions] section in docs/README.md
   \"\"\"($NotDbQuoteNotSlash|\\(\"|\\|$NotDbQuoteNotSlash)|\"($NotDbQuoteNotSlash|\\(\"|\\|$NotDbQuoteNotSlash)|\"($NotDbQuoteNotSlash|\\(\"|\\|$NotDbQuoteNotSlash))))*\"\"\"
     { mkTok getTextBlock }
 

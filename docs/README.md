@@ -71,3 +71,50 @@ Regular expression:
 ```
 qqq(z+s(q+s+z)+q(z+s(q+s+z)+q(z+s(q+s+z))))*qqq
 ```
+
+### On recognizing `TraditionalComments`
+
+FSM:
+
+```
+#states
+s0
+s1
+s2
+s3
+s4
+#initial
+s0
+#accepting
+s4
+#alphabet
+a
+b
+c
+#transitions
+s0:a>s1
+s1:b>s2
+s2:b>s3
+s3:a>s4
+s2:c>s2
+s2:a>s2
+s3:c>s2
+s3:b>s3
+```
+
+
+Alphabet:
+
+- `a`: `/`
+- `b`: `*`
+- `c`: anything other than `/` or `*`.
+
+Visualization:
+
+![fsm-TraditionalComments](/docs/imgs/fsm-TraditionalComments.png)
+
+Regular expression:
+
+```
+ab(c+a+bb*c)*bb*a
+```
