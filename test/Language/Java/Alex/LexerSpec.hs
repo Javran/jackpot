@@ -387,20 +387,12 @@ spec = do
                 The quick brown fox jumps over the lazy dog
             \""";
             """|]
-        [str "String text = \"\"\"\n\
-             \    The quick brown fox jumps over the lazy dog\n\
-             \\"\"\";\n"
-            ]
-      {-
-        TODO: the following case doesn't pass, but Java spec isn't very clear on how to handle line continuation.
-         expected: Right [StringLiteral "   aaa\n     bbb  ccc\n     def\n    g\n"]
-          but got: Right [StringLiteral "   aaa\n     bbb          ccc\n     def\n    g\n"]
-         plan:
-         - first scan treating line continuation as regular \n, and figure out indent x.
-         - second scan discard x whitespaces after line continuation.
-         - stripIndent.
-       -}
-      {-
+        [ str
+            "String text = \"\"\"\n\
+            \    The quick brown fox jumps over the lazy dog\n\
+            \\"\"\";\n"
+        ]
+    specify "line continuation" $ do
       parseOk
         [r|"""
            aaa
@@ -409,9 +401,52 @@ spec = do
              def
             g
         """|]
-        [str "   aaa\n\
-             \     bbb  ccc\n\
-             \     def\n\
-             \    g\n\
-             \"] -}
-
+        [ str
+            "   aaa\n\
+            \     bbb  ccc\n\
+            \     def\n\
+            \    g\n\
+            \"
+        ]
+      parseOk
+        [r|"""
+           aaa
+             bbb\
+          ccc
+             def
+            g\
+        \040!    1\
+           2\
+          3\
+          
+      
+           t"""|]
+        [ str
+            "   aaa\n\
+            \     bbb  ccc\n\
+            \     def\n\
+            \    g !    1   2  3\n\
+            \\n\
+            \   t"
+        ]
+      parseOk
+        [r|"""
+           aaa
+             bbb\
+          ccc
+             def
+            g\
+        \040!    1\
+           2\
+          3\
+          
+   \040  
+           t"""|]
+        [ str
+            "        aaa\n\
+            \          bbb       ccc\n\
+            \          def\n\
+            \         g      !    1        2       3\n\
+            \ \n\
+            \        t"
+        ]

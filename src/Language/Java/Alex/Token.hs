@@ -304,21 +304,40 @@ stringLitP =
 getStringLiteral :: MonadError String m => String -> m Token
 getStringLiteral = parseByReadP (StringLiteral <$> stringLitP)
 
--- TODO: line continuation
-textBlockP :: ReadP String
-textBlockP =
-  (qqq *> munch (\ch -> isSpace ch && ch /= '\n') *> char '\n')
-    *> (stripIndent . concat
-          <$> many
-            ((do
-                ch <- satisfy (/= '\\')
-                let v = ord ch
-                guard $ v >= 0 && v <= 0xFFFF
-                pure [ch])
-               <++ escapeBodyP'))
-      <* qqq
+-- extracts content part from a TextBlock raw literal.
+preprocessTextBlock :: String -> Maybe String
+preprocessTextBlock xs0 = do
+  ("\"\"\"", xs1) <- pure $ splitAt 3 xs0
+  '\n' : xs2 <- pure $ dropWhile (\ch -> isSpace ch && ch /= '\n') xs1
+  (xs3, "\"\"\"") <- pure $ splitAtEnd 3 xs2
+  pure xs3
+
+-- splitAt but from end. works on non-empty l and positive l.
+-- inspired by:
+-- https://www.joachim-breitner.de/blog/600-On_taking_the_last_n_elements_of_a_list
+splitAtEnd :: Int -> [a] -> ([a], [a])
+splitAtEnd n l = go (drop n l) $ zipWith (\i _ -> splitAt i l) [0 ..] l
   where
-    qqq = string "\"\"\""
+    go [] r = if null r then (l, []) else head r
+    go (_ : xs) (_ : ys) = go xs ys
+    go (_ : _) [] =
+      {-
+        for `go xs ys`, `ys` can never exhaust before `xs`,
+        as `xs == drop n ys`.
+       -}
+      error "unreachable"
+
+textBlockBodyP :: ReadP String
+textBlockBodyP =
+  concat
+    <$> many
+      ((do
+          ch <- satisfy (/= '\\')
+          let v = ord ch
+          guard $ v >= 0 && v <= 0xFFFF
+          pure [ch])
+         <++ escapeBodyP')
+  where
     escapeBodyP' :: ReadP String
     escapeBodyP' = do
       _ <- char '\\'
@@ -342,5 +361,26 @@ textBlockP =
           guard $ v >= 0 && v <= (0xFF :: Int)
           pure [chr v]
 
+{-
+  Quoting from spec:
+
+  > 1. Line terminators are normalized to the ASCII LF character, as follows:
+  >   + An ASCII CR character followed by an ASCII LF character is translated to an ASCII LF character.
+  >   + An ASCII CR character is translated to an ASCII LF character.
+
+  This part is already done by normalizing line terminators prior to processing in Alex.
+
+  > 2. Incidental white space is removed, as if by execution of String.stripIndent on the characters resulting from step 1.
+
+  `stripIndent` is done as preprocessing step.
+
+  > 3. Escape sequences are interpreted, as if by execution of String.translateEscapes on the characters resulting from step 2.
+
+  This is done by `ReadP` based parsing on actual content.
+ -}
 getTextBlock :: MonadError String m => String -> m Token
-getTextBlock = parseByReadP (StringLiteral <$> textBlockP)
+getTextBlock raw = case preprocessTextBlock raw of
+  Just content ->
+    parseByReadP (StringLiteral <$> textBlockBodyP) (stripIndent content)
+  Nothing ->
+    throwError "parse error"
