@@ -1,5 +1,16 @@
 # Implementation notes
 
+For now this directory serves as internal documents addressing various bits of
+the implementation details.
+
+## `Lexer.x` accepts a wider range of input that language itself
+
+This decision is intentional - we want the lexer to have a quick pass and
+dispatch results to Alex actions, in which we have full power of Haskell available
+to do fancy stuff and potentially improve error messages.
+
+In addition regular expression rules are not that maintainable.
+
 ## Regular expressions
 
 There are some long and complicated regular expressions (REs) in `Lexer.x`,
@@ -118,3 +129,19 @@ Regular expression:
 ```
 ab(c+a+bb*c)*bb*a
 ```
+
+## Regarding `$JavaIdentifierStart` and `$JavaIdentifierPart`
+
+This is an unfortunate bit: the platform library function
+`Data.Char.generalCategory` relies on UnicodeData [generated and shiped with GHC](libraries/base/include/WCsubst.h). For this implementation to be truly independent of GHC version (as long as it's modern
+to support all pragmas used by this library), that is out of the question.
+
+In addition, on Haskell side, `Data.IntSet` and `Data.HashSet` simply doesn't have sufficiently good performance
+even on small inputs comparing with that of Alex's - one can easily tell that by simply running
+the test suite.
+
+Therefore for now I've settled on dump that giant pile of unreadable garbage in Lexer.x and live with it.
+This situation might change however, depending on where [this Alex issue](https://github.com/simonmar/alex/issues/126) is heading.
+
+For now both `$JavaIdentifierStart` and `$JavaIdentifierPart` are generated
+by running [`UnicodeGen.kt`](/misc/UnicodeGen.kt) with appropriate JDK version.
