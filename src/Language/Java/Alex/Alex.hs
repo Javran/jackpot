@@ -1,12 +1,12 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DerivingVia #-}
 
 module Language.Java.Alex.Alex where
 
-import Control.Monad.Except
-import Control.Monad.State.Strict
+import Control.Effect.State
+import Control.Effect.Error
 import qualified Data.Bits
 import Data.Char (ord)
-import Data.Functor.Identity
 import Data.Word (Word8)
 import Language.Java.Alex.Lexer
 import Language.Java.Alex.Token
@@ -68,7 +68,7 @@ alexMove (AlexPn a l c) '\t' = AlexPn (a + 1) l (c + alex_tab_size - ((c -1) `re
 alexMove (AlexPn a l _) '\n' = AlexPn (a + 1) (l + 1) 1
 alexMove (AlexPn a l c) _ = AlexPn (a + 1) l (c + 1)
 
-alexGetInput :: Alex AlexInput
+alexGetInput :: Alex sig m => m AlexInput
 alexGetInput =
   gets $
     \AlexState
@@ -78,17 +78,17 @@ alexGetInput =
        , alex_inp = inp
        } -> (pos, c, bs, inp)
 
-alexSetInput :: AlexInput -> Alex ()
+alexSetInput :: Alex sig m => AlexInput -> m ()
 alexSetInput (pos, c, bs, inp) =
   modify $ \s -> s {alex_pos = pos, alex_chr = c, alex_bytes = bs, alex_inp = inp}
 
 ignorePendingBytes :: AlexInput -> AlexInput
 ignorePendingBytes (p, c, _ps, s) = (p, c, [], s)
 
-alexError :: String -> Alex a
+alexError :: Alex sig m => String -> m a
 alexError msg = throwError $ AlexSimpleError msg
 
-alexMonadScan :: Alex Token
+alexMonadScan :: Alex sig m => m Token
 alexMonadScan = do
   inp <- alexGetInput
   sc <- gets alex_scd
@@ -103,33 +103,24 @@ alexMonadScan = do
       alexSetInput inp'
       action (ignorePendingBytes inp) len
 
-runAlex :: String -> Alex a -> Either AlexError a
-runAlex inp (Alex f) = fmap fst (f s0)
-  where
-    s0 =
-      AlexState
-        { alex_bytes = []
-        , alex_pos = alexStartPos
-        , alex_inp = inp
-        , alex_chr = '\n'
-        , alex_scd = 0
-        }
+type Alex sig m =
+  ( Has (State AlexState) sig m
+  , Has (Error AlexError) sig m
+  )
+
+alexInitState :: String -> AlexState
+alexInitState inp =
+  AlexState
+    { alex_bytes = []
+    , alex_pos = alexStartPos
+    , alex_inp = inp
+    , alex_chr = '\n'
+    , alex_scd = 0
+    }
 
 data AlexError
   = AlexSimpleError String
   deriving (Show, Eq)
-
-newtype Alex a = Alex
-  { unAlex :: AlexState -> Either AlexError (a, AlexState)
-  }
-  deriving
-    ( Functor
-    , Applicative
-    , Monad
-    , MonadError AlexError
-    , MonadState AlexState
-    )
-    via (StateT AlexState (Except AlexError))
 
 data AlexState = AlexState
   { alex_pos :: !AlexPosn -- position at current input location
@@ -141,5 +132,3 @@ data AlexState = AlexState
 
 alexStartPos :: AlexPosn
 alexStartPos = AlexPn 0 1 1
-
-type AlexAction result = AlexInput -> Int -> Alex result

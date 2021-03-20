@@ -1,5 +1,9 @@
+{-# LANGUAGE ConstraintKinds #-}
+
 module Language.Java.Alex.Alex where
 
+import Control.Effect.Error
+import Control.Effect.State
 import Data.Word (Word8)
 
 type Byte = Word8
@@ -11,8 +15,6 @@ type AlexInput =
   , String
   )
 
-type AlexAction result = AlexInput -> Int -> Alex result
-
 alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
 alexInputPrevChar :: AlexInput -> Char
 
@@ -20,18 +22,11 @@ data AlexPosn
 
 data AlexError
 
-alexError :: String -> Alex a
+alexError :: Alex sig m => String -> m a
 
-newtype Alex a = Alex {unAlex :: AlexState -> Either AlexError (a, AlexState)}
+type Alex sig m =
+  ( Has (State AlexState) sig m
+  , Has (Error AlexError) sig m
+  )
 
-data AlexState = AlexState
-  { alex_pos :: !AlexPosn
-  , alex_inp :: String
-  , alex_chr :: !Char
-  , alex_bytes :: [Byte]
-  , alex_scd :: !Int
-  }
-
-instance Applicative Alex
-
-instance Monad Alex
+data AlexState

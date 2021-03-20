@@ -159,7 +159,7 @@ mkTok act (_, _, _, xs) l = act (take l xs)
   https://github.com/simonmar/alex/blob/35f07a1c272c6b3aace858c2b1b0c427a1d89e67/data/AlexWrappers.hs#L201
  -}
 
-getFloatingPoint :: String -> Alex Token
+getFloatingPoint :: Alex sig m => String -> m Token
 getFloatingPoint inp = case floatingPointLiteralS inp of
   [((s, d), "")] -> pure $ FloatingPointLiteral s d
   _ -> alexError "parse error"
@@ -238,10 +238,10 @@ integerLitP =
              <++ (oneOf "bB" *> binaryIntegerLitP)
              <++ zeroOrOctalIntegerLitP)
 
-getIntegerLiteral :: String -> Alex Token
+getIntegerLiteral :: Alex sig m => String -> m Token
 getIntegerLiteral = parseByReadP (uncurry IntegerLiteral <$> integerLitP)
 
-parseByReadP :: ReadP Token -> String -> Alex Token
+parseByReadP :: Alex sig m => ReadP Token -> String -> m Token
 parseByReadP parser inp =
   case readP_to_S (parser <* eof) inp of
     [(tok, "")] ->
@@ -285,7 +285,7 @@ charLitP =
           pure ch)
     <++ (escapeBodyP <* char '\'')
 
-getCharLiteral :: String -> Alex Token
+getCharLiteral :: Alex sig m => String -> m Token
 getCharLiteral = parseByReadP (CharacterLiteral <$> charLitP)
 
 stringLitP :: ReadP String
@@ -300,7 +300,7 @@ stringLitP =
          <++ escapeBodyP)
       <* char '\"'
 
-getStringLiteral :: String -> Alex Token
+getStringLiteral :: Alex sig m => String -> m Token
 getStringLiteral = parseByReadP (StringLiteral <$> stringLitP)
 
 -- extracts content part from a TextBlock raw literal.
@@ -357,7 +357,7 @@ textBlockBodyP =
 
   This is done by `ReadP` based parsing on actual content.
  -}
-getTextBlock :: String -> Alex Token
+getTextBlock :: Alex sig m => String -> m Token
 getTextBlock raw = case preprocessTextBlock raw of
   Just content ->
     parseByReadP (StringLiteral <$> textBlockBodyP) (stripIndent content)

@@ -18,6 +18,8 @@ dependencies:
 - file-embed
 - unordered-containers
 - split
+- fused-effects
+- transformers
 
 library:
   source-dirs: src
