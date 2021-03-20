@@ -16,8 +16,8 @@ which are then immediately consumed by next round.
 
 This round performs `String`-based transformation to be compliation with "3.2. Lexical Translations".
 In particular,
-we performs Unicode Escape and Normalizes LineTerminators to `\n`,
-and Removes the optional ASCII `SUB` character, which is allowed at the end of input stream.
+we performs Unicode escape and normalizes line terminators to `\n`,
+and removes the optional ASCII `SUB` character, which is allowed at the end of input stream.
 
 ### Lexer Execution
 
