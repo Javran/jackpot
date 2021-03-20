@@ -43,7 +43,7 @@ spec = do
 
   describe "optional last SUB" $
     specify "example" $ do
-      parseOk "[]\x1A" [SepLBracket,SepRBracket]
+      parseOk "[]\x1A" [SepLBracket, SepRBracket]
       parseFail "[]\x1A\x1A"
 
   describe "Boolean and Null literals" $ do
@@ -263,6 +263,11 @@ spec = do
     specify "spec examples" $ do
       let raw = "String i3 αρετη MAX_VALUE isLetterOrDigit"
       parseOk raw $ fmap ident (words raw)
+    specify "special identifiers" $ do
+      parseOk
+        "a_normal_one var yield or record"
+        [ident "a_normal_one", IdentVar, IdentYield, ident "or", IdentRecord]
+
   let char = CharacterLiteral
       str = StringLiteral
   describe "CharacterLiteral" $ do

@@ -19,6 +19,6 @@ TODOs:
 - We currently have two horrible chunks of data in Lexer, namely `$JavaIdentifierStart`
   and `$JavaIdentifierPart`. I wish I can do something better.
 
-- Use Alex without wrapper - this allows us to be more expressive on error messages.
+- Replace `ReadP` with something that can report finer errors.
 
 - Parsing.

@@ -172,6 +172,14 @@ tokens :-
   "_"
     { mkTokConst KwSymbolUnderscore }
 
+  -- Special Identifiers
+  "var"
+    { mkTokConst IdentVar }
+  "yield"
+    { mkTokConst IdentYield }
+  "record"
+    { mkTokConst IdentRecord }
+
   -- Separators
   "("
     { mkTokConst SepLParen }

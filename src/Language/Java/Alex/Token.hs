@@ -86,6 +86,9 @@ data Token
   | KwWhile
   | KwSymbolUnderscore
   | Identifier String
+  | IdentVar
+  | IdentYield
+  | IdentRecord
   | SepLParen
   | SepRParen
   | SepLBrace
