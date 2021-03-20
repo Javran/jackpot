@@ -3,8 +3,8 @@
 
 module Language.Java.Alex.Alex where
 
-import Control.Effect.State
 import Control.Effect.Error
+import Control.Effect.State
 import qualified Data.Bits
 import Data.Char (ord)
 import Data.Word (Word8)
@@ -72,15 +72,21 @@ alexGetInput :: Alex sig m => m AlexInput
 alexGetInput =
   gets $
     \AlexState
-       { alex_pos = pos
-       , alex_chr = c
-       , alex_bytes = bs
-       , alex_inp = inp
+       { alexPos = pos
+       , alexPrevChar = c
+       , alexBytes = bs
+       , alexInp = inp
        } -> (pos, c, bs, inp)
 
 alexSetInput :: Alex sig m => AlexInput -> m ()
 alexSetInput (pos, c, bs, inp) =
-  modify $ \s -> s {alex_pos = pos, alex_chr = c, alex_bytes = bs, alex_inp = inp}
+  modify $ \s ->
+    s
+      { alexPos = pos
+      , alexPrevChar = c
+      , alexBytes = bs
+      , alexInp = inp
+      }
 
 ignorePendingBytes :: AlexInput -> AlexInput
 ignorePendingBytes (p, c, _ps, s) = (p, c, [], s)
@@ -91,17 +97,19 @@ alexError msg = throwError $ AlexSimpleError msg
 alexMonadScan :: Alex sig m => m Token
 alexMonadScan = do
   inp <- alexGetInput
-  sc <- gets alex_scd
+  sc <- gets alexStartCode
   case alexScan inp sc of
     AlexEOF -> pure EndOfFile
     AlexError (AlexPn _ line column, _, _, _) ->
       alexError $ "lexical error at line " ++ show line ++ ", column " ++ show column
     AlexSkip inp' _len -> do
       alexSetInput inp'
+      modify $ \s -> s {alexPrevToken = Nothing}
       alexMonadScan
     AlexToken inp' len action -> do
       alexSetInput inp'
-      action (ignorePendingBytes inp) len
+      tok <- action (ignorePendingBytes inp) len
+      tok <$ modify (\s -> s {alexPrevToken = Just tok})
 
 type Alex sig m =
   ( Has (State AlexState) sig m
@@ -111,11 +119,12 @@ type Alex sig m =
 alexInitState :: String -> AlexState
 alexInitState inp =
   AlexState
-    { alex_bytes = []
-    , alex_pos = alexStartPos
-    , alex_inp = inp
-    , alex_chr = '\n'
-    , alex_scd = 0
+    { alexBytes = []
+    , alexPos = alexStartPos
+    , alexInp = inp
+    , alexPrevChar = '\n'
+    , alexStartCode = 0
+    , alexPrevToken = Nothing
     }
 
 data AlexError
@@ -123,11 +132,12 @@ data AlexError
   deriving (Show, Eq)
 
 data AlexState = AlexState
-  { alex_pos :: !AlexPosn -- position at current input location
-  , alex_inp :: String -- the current input
-  , alex_chr :: !Char -- the character before the input
-  , alex_bytes :: [Byte]
-  , alex_scd :: !Int -- the current startcode
+  { alexPos :: !AlexPosn -- position at current input location
+  , alexInp :: String -- the current input
+  , alexPrevChar :: !Char -- the character before the input
+  , alexBytes :: [Byte]
+  , alexStartCode :: !Int -- the current startcode
+  , alexPrevToken :: Maybe Token
   }
 
 alexStartPos :: AlexPosn
