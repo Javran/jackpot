@@ -71,6 +71,97 @@ tokens :-
   null
     { mkTokConst NullLiteral }
 
+  "("
+    { mkTokConst SepLParen }
+  ")"
+    { mkTokConst SepRParen }
+  "{"
+    { mkTokConst SepLBrace }
+  "}"
+    { mkTokConst SepRBrace }
+  "["
+    { mkTokConst SepLBracket }
+  "]"
+    { mkTokConst SepRBracket }
+  ";"
+    { mkTokConst SepSColon }
+  ","
+    { mkTokConst SepComma }
+  "."
+    { mkTokConst SepDot }
+  "..."
+    { mkTokConst SepTripleDot }
+  "@"
+    { mkTokConst SepAt }
+  "::"
+    { mkTokConst SepDbColon }
+  "="
+    { mkTokConst OpEq }
+  ">"
+    { mkTokConst OpGt }
+  "<"
+    { mkTokConst OpLt }
+  "!"
+    { mkTokConst OpExclam }
+  "~"
+    { mkTokConst OpTilde }
+  "?"
+    { mkTokConst OpQue }
+  ":"
+    { mkTokConst OpCol }
+  "->"
+    { mkTokConst OpMinusGt }
+  "=="
+    { mkTokConst OpEqEq }
+  "<="
+    { mkTokConst OpLe }
+  "!="
+    { mkTokConst OpNe }
+  "&&"
+    { mkTokConst OpAndAnd }
+  "||"
+    { mkTokConst OpOrOr }
+  "++"
+    { mkTokConst OpPlusPlus }
+  "--"
+    { mkTokConst OpMinusMinus }
+  "+"
+    { mkTokConst OpPlus }
+  "-"
+    { mkTokConst OpMinus }
+  "*"
+    { mkTokConst OpStar }
+  "/"
+    { mkTokConst OpSlash }
+  "&"
+    { mkTokConst OpAnd }
+  "|"
+    { mkTokConst OpOr }
+  "^"
+    { mkTokConst OpCaret }
+  "%"
+    { mkTokConst OpPercent }
+  "<<"
+    { mkTokConst OpLtLt }
+  "+="
+    { mkTokConst OpPlusEq }
+  "-="
+    { mkTokConst OpMinusEq }
+  "*="
+    { mkTokConst OpStarEq }
+  "/="
+    { mkTokConst OpSlashEq }
+  "&="
+    { mkTokConst OpAndEq }
+  "|="
+    { mkTokConst OpOrEq }
+  "^="
+    { mkTokConst OpCaretEq }
+  "%="
+    { mkTokConst OpPercentEq }
+  "<<="
+    { mkTokConst OpLtLtEq }
+
   -- CharacterLiteral
   --   SingleCharacter
   '[^'\\]'

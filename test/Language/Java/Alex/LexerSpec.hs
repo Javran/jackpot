@@ -60,11 +60,11 @@ spec = do
       parseOk "/**/ 3" [int 3]
       parseOk "/* this comment /* // /** ends here: */ 4" [int 4]
       parseOk "/* null */ false /**/null// null" [f, n]
-      parseFail "/*****null"
-      parseFail " /*/"
-      parseFail "/*null*/ /*/"
+      parseOk "/*****null" [OpSlash, OpStar, OpStar, OpStar, OpStar, OpStar, n]
+      parseOk " /*/" [OpSlash, OpStar, OpSlash]
+      parseOk "/*null*/ /*/" [OpSlash, OpStar, OpSlash]
     specify "example set #1" $ do
-      parseFail "/*/null"
+      parseOk "/*/null" [OpSlash, OpStar, OpSlash, n]
       parseOk "/**/2" [int 2]
       parseOk "/***/3" [int 3]
       parseOk "/****/4" [int 4]
@@ -76,7 +76,7 @@ spec = do
     specify "anything inside block comments" $
       parseOk "true/* \v */false" [t, f]
     specify "no nested comments" $
-      parseFail "/* no /* nesting */ */"
+      parseOk "/* no /* nesting */ */" [OpStar, OpSlash]
     specify "multiline" $ do
       parseOk
         [r|
@@ -206,7 +206,7 @@ spec = do
         parseOk "1__12__2.3_34_4E+5___5D" [double 1122.3344e55]
         parseOk "_1__12__2.3_34_4E+5___5D" [ident "_1__12__2", double 3.344e54]
         parseFail "1_.33E+55D"
-        parseFail "1._33E+55D"
+        parseOk "1._33E+55D" [double 1.0, ident "_33E", OpPlus, double 55.0]
         parseOk "1.33E+55_D" [double 1.33e55, ident "_D"]
         parseOk "6.022137e+23f" [float 6.022137e23]
 

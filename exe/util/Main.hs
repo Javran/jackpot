@@ -169,6 +169,10 @@ mainOpSep = do
   putStrLn "Alts:"
   forM_ (separators <> operators) $ \(_lit, tok) -> do
     putStrLn $ "  | " <> tok
+  putStrLn "Lexer:"
+  forM_ (separators <> operators) $ \(lit, tok) -> do
+      putStrLn $ "  \"" <> lit <> "\""
+      putStrLn $ "    { mkTokConst " <> tok <> " }"
 
 main :: IO ()
 main =
