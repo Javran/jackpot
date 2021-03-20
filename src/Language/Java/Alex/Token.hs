@@ -146,6 +146,9 @@ mkTok act (_, _, _, xs) l = act (take l xs)
   we need to rule out out-of-bound integers at this stage,
   however it won't be as straightforward due to the interaction with
   prefixing "-" unary operator.
+
+  Update: perhaps what we can do is to have a scan on parsed tokens,
+  by doing so we directly have access to previous token to tell us just the info we needed.
  -}
 
 {-
