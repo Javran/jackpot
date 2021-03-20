@@ -16,9 +16,13 @@ type AlexAction result = AlexInput -> Int -> Alex result
 alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
 alexInputPrevChar :: AlexInput -> Char
 
-data AlexPosn = AlexPn !Int !Int !Int
+data AlexPosn
 
-newtype Alex a = Alex {unAlex :: AlexState -> Either String (AlexState, a)}
+data AlexError
+
+alexError :: String -> Alex a
+
+newtype Alex a = Alex {unAlex :: AlexState -> Either AlexError (a, AlexState)}
 
 data AlexState = AlexState
   { alex_pos :: !AlexPosn

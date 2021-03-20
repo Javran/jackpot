@@ -8,6 +8,7 @@ import Data.Char
 import Data.Scientific
 import Language.Java.Alex.FloatingPoint (floatingPointLiteralS)
 import Language.Java.Alex.PlatformFunction
+import {-# SOURCE #-} Language.Java.Alex.Alex
 import Numeric
 import Text.ParserCombinators.ReadP hiding (many)
 
@@ -158,10 +159,10 @@ mkTok act (_, _, _, xs) l = act (take l xs)
   https://github.com/simonmar/alex/blob/35f07a1c272c6b3aace858c2b1b0c427a1d89e67/data/AlexWrappers.hs#L201
  -}
 
-getFloatingPoint :: MonadError String m => String -> m Token
+getFloatingPoint :: String -> Alex Token
 getFloatingPoint inp = case floatingPointLiteralS inp of
   [((s, d), "")] -> pure $ FloatingPointLiteral s d
-  _ -> throwError "parse error"
+  _ -> alexError "parse error"
 
 oneOf :: [] Char -> ReadP Char
 oneOf xs = satisfy (`elem` xs)
@@ -237,15 +238,15 @@ integerLitP =
              <++ (oneOf "bB" *> binaryIntegerLitP)
              <++ zeroOrOctalIntegerLitP)
 
-getIntegerLiteral :: MonadError String m => String -> m Token
+getIntegerLiteral :: String -> Alex Token
 getIntegerLiteral = parseByReadP (uncurry IntegerLiteral <$> integerLitP)
 
-parseByReadP :: MonadError String m => ReadP Token -> String -> m Token
+parseByReadP :: ReadP Token -> String -> Alex Token
 parseByReadP parser inp =
   case readP_to_S (parser <* eof) inp of
     [(tok, "")] ->
       pure tok
-    _ -> throwError "parse error"
+    _ -> alexError "parse error"
 
 mkEscapeBodyP :: ReadP r -> (Char -> r) -> ReadP r
 mkEscapeBodyP fallbackP done = do
@@ -284,7 +285,7 @@ charLitP =
           pure ch)
     <++ (escapeBodyP <* char '\'')
 
-getCharLiteral :: MonadError String m => String -> m Token
+getCharLiteral :: String -> Alex Token
 getCharLiteral = parseByReadP (CharacterLiteral <$> charLitP)
 
 stringLitP :: ReadP String
@@ -299,7 +300,7 @@ stringLitP =
          <++ escapeBodyP)
       <* char '\"'
 
-getStringLiteral :: MonadError String m => String -> m Token
+getStringLiteral :: String -> Alex Token
 getStringLiteral = parseByReadP (StringLiteral <$> stringLitP)
 
 -- extracts content part from a TextBlock raw literal.
@@ -356,9 +357,9 @@ textBlockBodyP =
 
   This is done by `ReadP` based parsing on actual content.
  -}
-getTextBlock :: MonadError String m => String -> m Token
+getTextBlock :: String -> Alex Token
 getTextBlock raw = case preprocessTextBlock raw of
   Just content ->
     parseByReadP (StringLiteral <$> textBlockBodyP) (stripIndent content)
   Nothing ->
-    throwError "parse error"
+    alexError "parse error"

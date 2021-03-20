@@ -12,7 +12,7 @@ allTokens =
     EndOfFile -> pure []
     x -> (x :) <$> allTokens
 
-parseAll :: String -> Either String [Token]
+parseAll :: String -> Either AlexError [Token]
 parseAll xs = runAlex ys allTokens
   where
     Just ys = preprocess xs

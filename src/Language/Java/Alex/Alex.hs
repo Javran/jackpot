@@ -1,5 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE DerivingVia #-}
 
 module Language.Java.Alex.Alex where
 
@@ -7,6 +6,7 @@ import Control.Monad.Except
 import Control.Monad.State.Strict
 import qualified Data.Bits
 import Data.Char (ord)
+import Data.Functor.Identity
 import Data.Word (Word8)
 import Language.Java.Alex.Lexer
 import Language.Java.Alex.Token
@@ -31,13 +31,7 @@ alexGetByte (p, _, [], c : s) =
    in case utf8Encode' c of
         (b, bs) -> p' `seq` Just (b, (p', c, bs, s))
 
-data AlexPosn = AlexPn !Int !Int !Int
-  deriving (Eq, Show)
-
 -- | Encode a Haskell String to a list of Word8 values, in UTF8 format.
-utf8Encode :: Char -> [Word8]
-utf8Encode = uncurry (:) . utf8Encode'
-
 utf8Encode' :: Char -> (Word8, [Word8])
 utf8Encode' c = case go (ord c) of
   (x, xs) -> (fromIntegral x, map fromIntegral xs)
@@ -66,84 +60,76 @@ utf8Encode' c = case go (ord c) of
           ]
         )
 
+data AlexPosn = AlexPn !Int !Int !Int
+  deriving (Eq, Show)
+
 alexMove :: AlexPosn -> Char -> AlexPosn
-alexMove (AlexPn a l c) '\t' = AlexPn (a + 1) l (c + alex_tab_size - ((c -1) `mod` alex_tab_size))
+alexMove (AlexPn a l c) '\t' = AlexPn (a + 1) l (c + alex_tab_size - ((c -1) `rem` alex_tab_size))
 alexMove (AlexPn a l _) '\n' = AlexPn (a + 1) (l + 1) 1
 alexMove (AlexPn a l c) _ = AlexPn (a + 1) l (c + 1)
 
 alexGetInput :: Alex AlexInput
 alexGetInput =
-  Alex $ \s@AlexState {alex_pos = pos, alex_chr = c, alex_bytes = bs, alex_inp = inp__} ->
-    Right (s, (pos, c, bs, inp__))
+  gets $
+    \AlexState
+       { alex_pos = pos
+       , alex_chr = c
+       , alex_bytes = bs
+       , alex_inp = inp
+       } -> (pos, c, bs, inp)
+
+alexSetInput :: AlexInput -> Alex ()
+alexSetInput (pos, c, bs, inp) =
+  modify $ \s -> s {alex_pos = pos, alex_chr = c, alex_bytes = bs, alex_inp = inp}
 
 ignorePendingBytes :: AlexInput -> AlexInput
 ignorePendingBytes (p, c, _ps, s) = (p, c, [], s)
 
 alexError :: String -> Alex a
-alexError message = Alex $ const $ Left message
-
-alexSetInput :: AlexInput -> Alex ()
-alexSetInput (pos, c, bs, inp__) =
-  Alex $ \s -> case s {alex_pos = pos, alex_chr = c, alex_bytes = bs, alex_inp = inp__} of
-    state__@AlexState {} -> Right (state__, ())
+alexError msg = throwError $ AlexSimpleError msg
 
 alexMonadScan :: Alex Token
 alexMonadScan = do
-  inp__ <- alexGetInput
-
-  sc <- alexGetStartCode
-  case alexScan inp__ sc of
-    AlexEOF -> alexEOF
+  inp <- alexGetInput
+  sc <- gets alex_scd
+  case alexScan inp sc of
+    AlexEOF -> pure EndOfFile
     AlexError (AlexPn _ line column, _, _, _) ->
       alexError $ "lexical error at line " ++ show line ++ ", column " ++ show column
-    AlexSkip inp__' _len -> do
-      alexSetInput inp__'
+    AlexSkip inp' _len -> do
+      alexSetInput inp'
       alexMonadScan
-    AlexToken inp__' len action -> do
-      alexSetInput inp__'
-      action (ignorePendingBytes inp__) len
+    AlexToken inp' len action -> do
+      alexSetInput inp'
+      action (ignorePendingBytes inp) len
 
-runAlex :: String -> Alex a -> Either String a
-runAlex input__ (Alex f) =
-  case f
-    (AlexState
-       { alex_bytes = []
-       , alex_pos = alexStartPos
-       , alex_inp = input__
-       , alex_chr = '\n'
-       , alex_scd = 0
-       }) of
-    Left msg -> Left msg
-    Right (_, a) -> Right a
+runAlex :: String -> Alex a -> Either AlexError a
+runAlex inp (Alex f) = fmap fst (f s0)
+  where
+    s0 =
+      AlexState
+        { alex_bytes = []
+        , alex_pos = alexStartPos
+        , alex_inp = inp
+        , alex_chr = '\n'
+        , alex_scd = 0
+        }
 
-newtype Alex a = Alex {unAlex :: AlexState -> Either String (AlexState, a)}
+data AlexError
+  = AlexSimpleError String
+  deriving (Show, Eq)
 
-instance Functor Alex where
-  fmap f a = Alex $ \s -> case unAlex a s of
-    Left msg -> Left msg
-    Right (s', a') -> Right (s', f a')
-
-instance Applicative Alex where
-  pure a = Alex $ \s -> Right (s, a)
-  fa <*> a = Alex $ \s -> case unAlex fa s of
-    Left msg -> Left msg
-    Right (s', f) -> case unAlex a s' of
-      Left msg -> Left msg
-      Right (s'', b) -> Right (s'', f b)
-
-instance Monad Alex where
-  m >>= k = Alex $ \s -> case unAlex m s of
-    Left msg -> Left msg
-    Right (s', a) -> unAlex (k a) s'
-
-instance MonadError String Alex where
-  throwError e = Alex (const (Left e))
-  catchError m handler = Alex $ \st -> case unAlex m st of
-    Left e -> unAlex (handler e) st
-    Right v -> Right v
-
-instance MonadState AlexState Alex where
-  state f = Alex $ \s -> let (v, s') = f s in pure (s', v)
+newtype Alex a = Alex
+  { unAlex :: AlexState -> Either AlexError (a, AlexState)
+  }
+  deriving
+    ( Functor
+    , Applicative
+    , Monad
+    , MonadError AlexError
+    , MonadState AlexState
+    )
+    via (StateT AlexState (Except AlexError))
 
 data AlexState = AlexState
   { alex_pos :: !AlexPosn -- position at current input location
@@ -155,11 +141,5 @@ data AlexState = AlexState
 
 alexStartPos :: AlexPosn
 alexStartPos = AlexPn 0 1 1
-
-alexGetStartCode :: Alex Int
-alexGetStartCode = Alex $ \s@AlexState {alex_scd = sc} -> Right (s, sc)
-
-alexEOF :: Alex Token
-alexEOF = pure EndOfFile
 
 type AlexAction result = AlexInput -> Int -> Alex result
