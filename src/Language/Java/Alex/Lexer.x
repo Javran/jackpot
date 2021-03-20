@@ -64,13 +64,118 @@ tokens :-
   -- See: [Regular expressions] section in /docs/README.md
   \/\*($NotStarNotSlash|\/|\*\**$NotStarNotSlash)*\*\**\/
     ;
-  true
+  "true"
     { mkTokConst (BooleanLiteral True) }
-  false
+  "false"
     { mkTokConst (BooleanLiteral False) }
-  null
+  "null"
     { mkTokConst NullLiteral }
 
+  -- Keywords
+  "abstract"
+    { mkTokConst KwAbstract }
+  "continue"
+    { mkTokConst KwContinue }
+  "for"
+    { mkTokConst KwFor }
+  "new"
+    { mkTokConst KwNew }
+  "switch"
+    { mkTokConst KwSwitch }
+  "assert"
+    { mkTokConst KwAssert }
+  "default"
+    { mkTokConst KwDefault }
+  "if"
+    { mkTokConst KwIf }
+  "package"
+    { mkTokConst KwPackage }
+  "synchronized"
+    { mkTokConst KwSynchronized }
+  "boolean"
+    { mkTokConst KwBoolean }
+  "do"
+    { mkTokConst KwDo }
+  "goto"
+    { mkTokConst KwGoto }
+  "private"
+    { mkTokConst KwPrivate }
+  "this"
+    { mkTokConst KwThis }
+  "break"
+    { mkTokConst KwBreak }
+  "double"
+    { mkTokConst KwDouble }
+  "implements"
+    { mkTokConst KwImplements }
+  "protected"
+    { mkTokConst KwProtected }
+  "throw"
+    { mkTokConst KwThrow }
+  "byte"
+    { mkTokConst KwByte }
+  "else"
+    { mkTokConst KwElse }
+  "import"
+    { mkTokConst KwImport }
+  "public"
+    { mkTokConst KwPublic }
+  "throws"
+    { mkTokConst KwThrows }
+  "case"
+    { mkTokConst KwCase }
+  "enum"
+    { mkTokConst KwEnum }
+  "instanceof"
+    { mkTokConst KwInstanceof }
+  "return"
+    { mkTokConst KwReturn }
+  "transient"
+    { mkTokConst KwTransient }
+  "catch"
+    { mkTokConst KwCatch }
+  "extends"
+    { mkTokConst KwExtends }
+  "int"
+    { mkTokConst KwInt }
+  "short"
+    { mkTokConst KwShort }
+  "try"
+    { mkTokConst KwTry }
+  "char"
+    { mkTokConst KwChar }
+  "final"
+    { mkTokConst KwFinal }
+  "interface"
+    { mkTokConst KwInterface }
+  "static"
+    { mkTokConst KwStatic }
+  "void"
+    { mkTokConst KwVoid }
+  "class"
+    { mkTokConst KwClass }
+  "finally"
+    { mkTokConst KwFinally }
+  "long"
+    { mkTokConst KwLong }
+  "strictfp"
+    { mkTokConst KwStrictfp }
+  "volatile"
+    { mkTokConst KwVolatile }
+  "const"
+    { mkTokConst KwConst }
+  "float"
+    { mkTokConst KwFloat }
+  "native"
+    { mkTokConst KwNative }
+  "super"
+    { mkTokConst KwSuper }
+  "while"
+    { mkTokConst KwWhile }
+  "_"
+    { mkTokConst KwSymbolUnderscore }
+
+  -- Separators
   "("
     { mkTokConst SepLParen }
   ")"
@@ -95,6 +200,8 @@ tokens :-
     { mkTokConst SepAt }
   "::"
     { mkTokConst SepDbColon }
+
+  -- Operators
   "="
     { mkTokConst OpEq }
   ">"
@@ -209,7 +316,7 @@ tokens :-
     { mkTok getFloatingPoint }
 
   $JavaIdentifierStart$JavaIdentifierPart*
-    { mkTok getKeywordOrIdentifier }
+    { mkTok (pure . Identifier) }
 {
 
 alexEOF :: Alex Token

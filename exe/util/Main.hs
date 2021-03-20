@@ -3,11 +3,11 @@
 
 module Main where
 
+import Control.Monad
 import Data.Bifunctor
 import Data.Char
 import System.Environment
 import Text.Replace
-import Control.Monad
 
 javaKeywords :: [String]
 javaKeywords =
@@ -75,9 +75,10 @@ mainGenToken :: IO ()
 mainGenToken = mapM_ (putStrLn . ("  | " <>) . toTokenAlt) javaKeywords
 
 mainGenKeywords :: IO ()
-mainGenKeywords = mapM_ go javaKeywords
-  where
-    go kwRaw = putStrLn $ " , (" <> show kwRaw <> ", " <> toTokenAlt kwRaw <> ")"
+mainGenKeywords =
+  forM_ javaKeywords $ \kwRaw -> do
+    putStrLn $ "  \"" <> kwRaw <> "\""
+    putStrLn $ "    { mkTokConst " <> toTokenAlt kwRaw <> " }"
 
 mainGenRegex :: IO ()
 mainGenRegex = do
@@ -171,8 +172,8 @@ mainOpSep = do
     putStrLn $ "  | " <> tok
   putStrLn "Lexer:"
   forM_ (separators <> operators) $ \(lit, tok) -> do
-      putStrLn $ "  \"" <> lit <> "\""
-      putStrLn $ "    { mkTokConst " <> tok <> " }"
+    putStrLn $ "  \"" <> lit <> "\""
+    putStrLn $ "    { mkTokConst " <> tok <> " }"
 
 main :: IO ()
 main =

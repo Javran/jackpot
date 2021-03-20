@@ -5,7 +5,6 @@ module Language.Java.Alex.Token where
 import Control.Applicative
 import Control.Monad.Except
 import Data.Char
-import qualified Data.Map.Strict as M
 import Data.Scientific
 import Language.Java.Alex.FloatingPoint (floatingPointLiteralS)
 import Language.Java.Alex.PlatformFunction
@@ -244,72 +243,6 @@ parseByReadP parser inp =
     [(tok, "")] ->
       pure tok
     _ -> throwError "parse error"
-
-keywords :: M.Map String Token
-keywords =
-  M.fromList
-    [ ("abstract", KwAbstract)
-    , ("continue", KwContinue)
-    , ("for", KwFor)
-    , ("new", KwNew)
-    , ("switch", KwSwitch)
-    , ("assert", KwAssert)
-    , ("default", KwDefault)
-    , ("if", KwIf)
-    , ("package", KwPackage)
-    , ("synchronized", KwSynchronized)
-    , ("boolean", KwBoolean)
-    , ("do", KwDo)
-    , ("goto", KwGoto)
-    , ("private", KwPrivate)
-    , ("this", KwThis)
-    , ("break", KwBreak)
-    , ("double", KwDouble)
-    , ("implements", KwImplements)
-    , ("protected", KwProtected)
-    , ("throw", KwThrow)
-    , ("byte", KwByte)
-    , ("else", KwElse)
-    , ("import", KwImport)
-    , ("public", KwPublic)
-    , ("throws", KwThrows)
-    , ("case", KwCase)
-    , ("enum", KwEnum)
-    , ("instanceof", KwInstanceof)
-    , ("return", KwReturn)
-    , ("transient", KwTransient)
-    , ("catch", KwCatch)
-    , ("extends", KwExtends)
-    , ("int", KwInt)
-    , ("short", KwShort)
-    , ("try", KwTry)
-    , ("char", KwChar)
-    , ("final", KwFinal)
-    , ("interface", KwInterface)
-    , ("static", KwStatic)
-    , ("void", KwVoid)
-    , ("class", KwClass)
-    , ("finally", KwFinally)
-    , ("long", KwLong)
-    , ("strictfp", KwStrictfp)
-    , ("volatile", KwVolatile)
-    , ("const", KwConst)
-    , ("float", KwFloat)
-    , ("native", KwNative)
-    , ("super", KwSuper)
-    , ("while", KwWhile)
-    , ("_", KwSymbolUnderscore)
-    ]
-
-parseKeywordOrIdentifier :: String -> Maybe Token
-parseKeywordOrIdentifier xs =
-  (keywords M.!? xs)
-    <|> pure (Identifier xs)
-
-getKeywordOrIdentifier :: MonadError String m => String -> m Token
-getKeywordOrIdentifier xs = case parseKeywordOrIdentifier xs of
-  Nothing -> throwError "Unrecognized keyword or identifer"
-  Just t -> pure t
 
 mkEscapeBodyP :: ReadP r -> (Char -> r) -> ReadP r
 mkEscapeBodyP fallbackP done = do
