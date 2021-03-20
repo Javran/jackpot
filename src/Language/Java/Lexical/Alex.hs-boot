@@ -1,6 +1,6 @@
 {-# LANGUAGE ConstraintKinds #-}
 
-module Language.Java.Alex.Alex where
+module Language.Java.Lexical.Alex where
 
 import Control.Effect.Error
 import Control.Effect.State

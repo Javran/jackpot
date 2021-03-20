@@ -1,14 +1,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Language.Java.Alex.Token where
+module Language.Java.Lexical.Token where
 
 import Control.Applicative
 import Control.Monad.Except
 import Data.Char
 import Data.Scientific
-import Language.Java.Alex.FloatingPoint (floatingPointLiteralS)
-import Language.Java.Alex.PlatformFunction
-import {-# SOURCE #-} Language.Java.Alex.Alex
+import Language.Java.Lexical.FloatingPoint (floatingPointLiteralS)
+import Language.Java.Lexical.PlatformFunction
+import {-# SOURCE #-} Language.Java.Lexical.Alex
 import Numeric
 import Text.ParserCombinators.ReadP hiding (many)
 

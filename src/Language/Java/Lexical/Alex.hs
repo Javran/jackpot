@@ -1,15 +1,15 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DerivingVia #-}
 
-module Language.Java.Alex.Alex where
+module Language.Java.Lexical.Alex where
 
 import Control.Effect.Error
 import Control.Effect.State
 import qualified Data.Bits
 import Data.Char (ord)
 import Data.Word (Word8)
-import Language.Java.Alex.Lexer
-import Language.Java.Alex.Token
+import Language.Java.Lexical.Lexer
+import Language.Java.Lexical.Token
 
 type Byte = Word8
 

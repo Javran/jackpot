@@ -4,13 +4,13 @@
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 
-module Language.Java.Alex.Lexer where
+module Language.Java.Lexical.Lexer where
 
 import Control.Monad.Except
 import Control.Monad.State.Strict
 import qualified Data.ByteString.Lazy as BSL
-import Language.Java.Alex.Token
-import {-# SOURCE #-} Language.Java.Alex.Alex
+import Language.Java.Lexical.Token
+import {-# SOURCE #-} Language.Java.Lexical.Alex
 }
 
 $digit = 0-9

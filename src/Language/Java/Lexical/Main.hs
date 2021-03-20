@@ -1,11 +1,11 @@
 {-# LANGUAGE LambdaCase #-}
 
-module Language.Java.Alex.Main
+module Language.Java.Lexical.Main
   ( main
   )
 where
 
-import Language.Java.Alex.Wrapper
+import Language.Java.Lexical.Wrapper
 import System.Environment
 
 main :: IO ()

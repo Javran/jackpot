@@ -1,13 +1,13 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Language.Java.Alex.Wrapper where
+module Language.Java.Lexical.Wrapper where
 
 import Control.Carrier.State.Strict
 import Control.Monad.Trans.Except
-import Language.Java.Alex.Alex
-import Language.Java.Alex.Preprocess
-import Language.Java.Alex.Token
+import Language.Java.Lexical.Alex
+import Language.Java.Lexical.Preprocess
+import Language.Java.Lexical.Token
 
 allTokens :: Alex sig m => m [Token]
 allTokens =

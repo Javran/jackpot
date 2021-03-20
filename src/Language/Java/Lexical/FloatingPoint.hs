@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeApplications #-}
 
-module Language.Java.Alex.FloatingPoint where
+module Language.Java.Lexical.FloatingPoint where
 
 import Data.Char
 import Data.Scientific

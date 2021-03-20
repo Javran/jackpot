@@ -1,9 +1,9 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module Language.Java.Alex.PreprocessSpec where
+module Language.Java.Lexical.PreprocessSpec where
 
 import Data.Char
-import Language.Java.Alex.Preprocess
+import Language.Java.Lexical.Preprocess
 import Test.Hspec
 import Text.RawString.QQ
 

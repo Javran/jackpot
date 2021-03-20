@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Language.Java.Alex.LexerSpec where
+module Language.Java.Lexical.LexerSpec where
 
 {-
   Note that this does not directly import Lexer but rather the Wrapper module,
@@ -13,8 +13,8 @@ import Control.Monad
 import Data.Either
 import Data.Scientific
 import Data.String
-import Language.Java.Alex.Token
-import Language.Java.Alex.Wrapper
+import Language.Java.Lexical.Token
+import Language.Java.Lexical.Wrapper
 import Test.Hspec
 import Text.RawString.QQ
 import Text.Read

@@ -20,6 +20,7 @@ dependencies:
 - split
 - fused-effects
 - transformers
+- megaparsec
 
 library:
   source-dirs: src

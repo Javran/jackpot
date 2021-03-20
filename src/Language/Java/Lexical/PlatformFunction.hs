@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Language.Java.Alex.PlatformFunction where
+module Language.Java.Lexical.PlatformFunction where
 
 import Data.Char
 import Data.FileEmbed

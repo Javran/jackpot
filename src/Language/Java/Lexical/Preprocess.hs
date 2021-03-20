@@ -1,12 +1,15 @@
-module Language.Java.Alex.Preprocess where
+module Language.Java.Lexical.Preprocess where
 
 {-
-  This technically has nothing to do with Alex,
-  but Java spec demands (3.2. Lexical Translations) that Unicode escape to be performed as
-  the first step of lexical analysis, which is easier to do outside of Alex's
-  framework.
+  Java spec requires that:
 
-  Therefore UnicodeEscape is here as a pre-processing step prior to the Alex scan.
+  - (§3.2) Unicode escape to be performed as the first step of lexical analysis.
+  - (§3.2) Line terminators to be treated the same.
+  - (§3.3) There may be an optional ASCII Sub as the last character of input stream,
+    which is to be ignored.
+
+  This module serves as a preprocessing step to do those things prior to
+  passing input to Alex.
 
   According to my understading of the spec spec,
   for \u0000 ~ \uFFFF, we just need to map them to corresponding
