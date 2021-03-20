@@ -3,7 +3,7 @@
 module Language.Java.Alex.Wrapper where
 
 import Language.Java.Alex.Token
-import Language.Java.Alex.Lexer
+import Language.Java.Alex.Alex
 import Language.Java.Alex.Preprocess
 
 allTokens :: Alex [Token]

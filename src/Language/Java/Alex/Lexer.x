@@ -11,10 +11,8 @@ import Control.Monad.Except
 import Control.Monad.State.Strict
 import qualified Data.ByteString.Lazy as BSL
 import Language.Java.Alex.Token
-
+import {-# SOURCE #-} Language.Java.Alex.Alex
 }
-
-%wrapper "monad"
 
 $digit = 0-9
 $hexdigit = [0-9a-fA-F]
@@ -330,5 +328,7 @@ instance MonadError String Alex where
 
 instance MonadState AlexState Alex where
   state f = Alex $ \s -> let (v, s') = f s in pure (s', v)
+
+alex_actions :: Array Int (AlexAction Token)
 
 }
