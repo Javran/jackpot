@@ -1,7 +1,6 @@
 {
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 
@@ -315,20 +314,3 @@ tokens :-
 
   $JavaIdentifierStart$JavaIdentifierPart*
     { mkTok (pure . Identifier) }
-{
-
-alexEOF :: Alex Token
-alexEOF = pure EndOfFile
-
-instance MonadError String Alex where
-  throwError e = Alex (const (Left e))
-  catchError m handler = Alex $ \st -> case unAlex m st of
-    Left e -> unAlex (handler e) st
-    Right v -> Right v
-
-instance MonadState AlexState Alex where
-  state f = Alex $ \s -> let (v, s') = f s in pure (s', v)
-
-alex_actions :: Array Int (AlexAction Token)
-
-}

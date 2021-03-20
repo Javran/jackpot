@@ -5,10 +5,10 @@ import Data.Word (Word8)
 type Byte = Word8
 
 type AlexInput =
-  ( AlexPosn -- current position,
-  , Char -- previous char
-  , [Byte] -- pending bytes on current char
-  , String -- current input string
+  ( AlexPosn
+  , Char
+  , [Byte]
+  , String
   )
 
 type AlexAction result = AlexInput -> Int -> Alex result
@@ -21,11 +21,11 @@ data AlexPosn = AlexPn !Int !Int !Int
 newtype Alex a = Alex {unAlex :: AlexState -> Either String (AlexState, a)}
 
 data AlexState = AlexState
-  { alex_pos :: !AlexPosn -- position at current input location
-  , alex_inp :: String -- the current input
-  , alex_chr :: !Char -- the character before the input
+  { alex_pos :: !AlexPosn
+  , alex_inp :: String
+  , alex_chr :: !Char
   , alex_bytes :: [Byte]
-  , alex_scd :: !Int -- the current startcode
+  , alex_scd :: !Int
   }
 
 instance Applicative Alex

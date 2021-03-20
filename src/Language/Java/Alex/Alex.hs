@@ -1,10 +1,15 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Language.Java.Alex.Alex where
 
-import Control.Applicative as App (Applicative (..))
+import Control.Monad.Except
+import Control.Monad.State.Strict
 import qualified Data.Bits
 import Data.Char (ord)
 import Data.Word (Word8)
 import Language.Java.Alex.Lexer
+import Language.Java.Alex.Token
 
 type Byte = Word8
 
@@ -19,9 +24,9 @@ alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (_p, c, _bs, _s) = c
 
 alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
-alexGetByte (p, c, (b : bs), s) = Just (b, (p, c, bs, s))
+alexGetByte (p, c, b : bs, s) = Just (b, (p, c, bs, s))
 alexGetByte (_, _, [], []) = Nothing
-alexGetByte (p, _, [], (c : s)) =
+alexGetByte (p, _, [], c : s) =
   let p' = alexMove p c
    in case utf8Encode' c of
         (b, bs) -> p' `seq` Just (b, (p', c, bs, s))
@@ -80,15 +85,17 @@ alexError message = Alex $ const $ Left message
 alexSetInput :: AlexInput -> Alex ()
 alexSetInput (pos, c, bs, inp__) =
   Alex $ \s -> case s {alex_pos = pos, alex_chr = c, alex_bytes = bs, alex_inp = inp__} of
-    state__@(AlexState {}) -> Right (state__, ())
+    state__@AlexState {} -> Right (state__, ())
 
+alexMonadScan :: Alex Token
 alexMonadScan = do
   inp__ <- alexGetInput
 
   sc <- alexGetStartCode
   case alexScan inp__ sc of
     AlexEOF -> alexEOF
-    AlexError ((AlexPn _ line column), _, _, _) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+    AlexError (AlexPn _ line column, _, _, _) ->
+      alexError $ "lexical error at line " ++ show line ++ ", column " ++ show column
     AlexSkip inp__' _len -> do
       alexSetInput inp__'
       alexMonadScan
@@ -128,7 +135,15 @@ instance Monad Alex where
   m >>= k = Alex $ \s -> case unAlex m s of
     Left msg -> Left msg
     Right (s', a) -> unAlex (k a) s'
-  return = App.pure
+
+instance MonadError String Alex where
+  throwError e = Alex (const (Left e))
+  catchError m handler = Alex $ \st -> case unAlex m st of
+    Left e -> unAlex (handler e) st
+    Right v -> Right v
+
+instance MonadState AlexState Alex where
+  state f = Alex $ \s -> let (v, s') = f s in pure (s', v)
 
 data AlexState = AlexState
   { alex_pos :: !AlexPosn -- position at current input location
@@ -143,5 +158,8 @@ alexStartPos = AlexPn 0 1 1
 
 alexGetStartCode :: Alex Int
 alexGetStartCode = Alex $ \s@AlexState {alex_scd = sc} -> Right (s, sc)
+
+alexEOF :: Alex Token
+alexEOF = pure EndOfFile
 
 type AlexAction result = AlexInput -> Int -> Alex result
