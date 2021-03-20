@@ -3,9 +3,11 @@
 
 module Main where
 
+import Data.Bifunctor
 import Data.Char
 import System.Environment
 import Text.Replace
+import Control.Monad
 
 javaKeywords :: [String]
 javaKeywords =
@@ -100,10 +102,87 @@ mainGenRegex = do
       ]
       "ab(c+a+bb*c)*bb*a"
 
+separators :: [(String, String)]
+separators =
+  (fmap . second)
+    ("Sep" <>)
+    [ ("(", "LParen")
+    , (")", "RParen")
+    , ("{", "LBrace")
+    , ("}", "RBrace")
+    , ("[", "LBracket")
+    , ("]", "RBracket")
+    , (";", "SColon")
+    , (",", "Comma")
+    , (".", "Dot")
+    , ("...", "TripleDot")
+    , ("@", "At")
+    , ("::", "DbColon")
+    ]
+
+operators :: [(String, String)]
+operators =
+  (fmap . second)
+    ("Op" <>)
+    [ ("=", "Eq")
+    , (">", "Gt")
+    , ("<", "Lt")
+    , ("!", "Exclam")
+    , ("~", "Tilde")
+    , ("?", "Que")
+    , (":", "Col")
+    , ("->", "MinusGt")
+    , ("==", "EqEq")
+    , ("<=", "Le")
+    , ("!=", "Ne")
+    , ("&&", "AndAnd")
+    , ("||", "OrOr")
+    , ("++", "PlusPlus")
+    , ("--", "MinusMinus")
+    , ("+", "Plus")
+    , ("-", "Minus")
+    , ("*", "Star")
+    , ("/", "Slash")
+    , ("&", "And")
+    , ("|", "Or")
+    , ("^", "Caret")
+    , ("%", "Percent")
+    , ("<<", "LtLt")
+    , ("+=", "PlusEq")
+    , ("-=", "MinusEq")
+    , ("*=", "StarEq")
+    , ("/=", "SlashEq")
+    , ("&=", "AndEq")
+    , ("|=", "OrEq")
+    , ("^=", "CaretEq")
+    , ("%=", "PercentEq")
+    , ("<<=", "LtLtEq")
+    -- , (">=", "")
+    -- , (">>", "")
+    -- , (">>>", "")
+    -- , (">>=", "")
+    -- , (">>>=", "")
+    ]
+
+mainOpSep :: IO ()
+mainOpSep = do
+  putStrLn "Alts:"
+  forM_ (separators <> operators) $ \(_lit, tok) -> do
+    putStrLn $ "  | " <> tok
+
 main :: IO ()
 main =
   getArgs >>= \case
-    "tokenalt" : _ -> mainGenToken
-    "kw" : _ -> mainGenKeywords
-    "regex" : _ -> mainGenRegex
+    "tokenalt" : _ ->
+      -- token data alternatives
+      mainGenToken
+    "kw" : _ ->
+      -- (keyword str, data type) pairs
+      mainGenKeywords
+    "regex" : _ ->
+      -- those two complicated regexes.
+      mainGenRegex
+    "opsep" : _ ->
+      -- gen operator and separator related stuff
+      mainOpSep
     _ -> error "unsupported command"

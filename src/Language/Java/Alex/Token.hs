@@ -12,6 +12,19 @@ import Language.Java.Alex.PlatformFunction
 import Numeric
 import Text.ParserCombinators.ReadP hiding (many)
 
+
+{-
+  Note that operators does not include anything that begins with ">"
+  (with the except of ">" alone). This is so that we can
+  glue them together when it comes to parsing AST.
+  (as Java spec mandates that lexical analysis should not try to
+  obtain the longest option in a "type context", however
+  there's no easy way to tell a type context during lexical analysis).
+
+  Those excluded operators are:
+  >=, >>, >>>, >>=, >>>=
+
+ -}
 data Token
   = EndOfFile
   | Todo String
@@ -73,6 +86,52 @@ data Token
   | KwWhile
   | KwSymbolUnderscore
   | Identifier String
+  | SepLParen
+  | SepRParen
+  | SepLBrace
+  | SepRBrace
+  | SepLBracket
+  | SepRBracket
+  | SepSColon
+  | SepComma
+  | SepDot
+  | SepTripleDot
+  | SepAt
+  | SepDbColon
+  | OpEq
+  | OpGt
+  | OpLt
+  | OpExclam
+  | OpTilde
+  | OpQue
+  | OpCol
+  | OpMinusGt
+  | OpEqEq
+  | OpLe
+  | OpNe
+  | OpAndAnd
+  | OpOrOr
+  | OpPlusPlus
+  | OpMinusMinus
+  | OpPlus
+  | OpMinus
+  | OpStar
+  | OpSlash
+  | OpAnd
+  | OpOr
+  | OpCaret
+  | OpPercent
+  | OpLtLt
+  | OpPlusEq
+  | OpMinusEq
+  | OpStarEq
+  | OpSlashEq
+  | OpAndEq
+  | OpOrEq
+  | OpCaretEq
+  | OpPercentEq
+  | OpLtLtEq
+  | OptionalSub -- an optional Control-Z
   deriving (Eq, Show)
 
 todo :: Applicative f => (a, b, c, String) -> Int -> f Token
