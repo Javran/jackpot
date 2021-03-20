@@ -391,3 +391,27 @@ spec = do
              \    The quick brown fox jumps over the lazy dog\n\
              \\"\"\";\n"
             ]
+      {-
+        TODO: the following case doesn't pass, but Java spec isn't very clear on how to handle line continuation.
+         expected: Right [StringLiteral "   aaa\n     bbb  ccc\n     def\n    g\n"]
+          but got: Right [StringLiteral "   aaa\n     bbb          ccc\n     def\n    g\n"]
+         plan:
+         - first scan treating line continuation as regular \n, and figure out indent x.
+         - second scan discard x whitespaces after line continuation.
+         - stripIndent.
+       -}
+      {-
+      parseOk
+        [r|"""
+           aaa
+             bbb\
+          ccc
+             def
+            g
+        """|]
+        [str "   aaa\n\
+             \     bbb  ccc\n\
+             \     def\n\
+             \    g\n\
+             \"] -}
+

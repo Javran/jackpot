@@ -308,17 +308,39 @@ getStringLiteral = parseByReadP (StringLiteral <$> stringLitP)
 textBlockP :: ReadP String
 textBlockP =
   (qqq *> munch (\ch -> isSpace ch && ch /= '\n') *> char '\n')
-    *> (stripIndent
+    *> (stripIndent . concat
           <$> many
             ((do
                 ch <- satisfy (/= '\\')
                 let v = ord ch
                 guard $ v >= 0 && v <= 0xFFFF
-                pure ch)
-               <++ escapeBodyP))
+                pure [ch])
+               <++ escapeBodyP'))
       <* qqq
   where
     qqq = string "\"\"\""
+    escapeBodyP' :: ReadP String
+    escapeBodyP' = do
+      _ <- char '\\'
+      let x <~ y = [x] <$ char y
+      '\b' <~ 'b'
+        <++ ' ' <~ 's'
+        <++ '\t' <~ 't'
+        <++ '\n' <~ 'n'
+        <++ '\f' <~ 'f'
+        <++ '\r' <~ 'r'
+        <++ '"' <~ '"'
+        <++ '\'' <~ '\''
+        <++ '\\' <~ '\\'
+        <++ ("" <$ char '\n')
+        <++ octalEsc
+      where
+        octalEsc = do
+          xs <- munch1 isOctDigit
+          guard $ length xs <= 3
+          [(v, "")] <- pure (readOct xs)
+          guard $ v >= 0 && v <= (0xFF :: Int)
+          pure [chr v]
 
 getTextBlock :: MonadError String m => String -> m Token
 getTextBlock = parseByReadP (StringLiteral <$> textBlockP)
