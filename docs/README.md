@@ -64,7 +64,7 @@ Alphabet:
 
 Visualization:
 
-![fsm-TextBlock](docs/imgs/fsm-TextBlock.png)
+![fsm-TextBlock](/docs/imgs/fsm-TextBlock.png)
 
 Regular expression:
 
