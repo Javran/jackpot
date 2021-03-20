@@ -45,6 +45,7 @@ executables:
     source-dirs: exe/util
     dependencies:
       - jackpot
+      - text-replace
     ghc-options:
       - -Wall
       - -O2
