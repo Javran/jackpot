@@ -105,12 +105,10 @@ alexMonadScan = do
       alexError $ "lexical error at line " ++ show line ++ ", column " ++ show column
     AlexSkip inp' _len -> do
       alexSetInput inp'
-      modify $ \s -> s {alexPrevToken = Nothing}
       alexMonadScan
     AlexToken inp' len action -> do
       alexSetInput inp'
-      tok <- action (ignorePendingBytes inp) len
-      tok <$ modify (\s -> s {alexPrevToken = Just tok})
+      action (ignorePendingBytes inp) len
 
 type Alex sig m =
   ( Has (State AlexState) sig m
@@ -134,7 +132,6 @@ data AlexState = AlexState
   , alexPrevChar :: !Char -- the character before the input
   , alexBytes :: [Byte]
   , alexStartCode :: !Int -- the current startcode
-  , alexPrevToken :: Maybe Token
   }
 
 alexStartPos :: AlexPosn

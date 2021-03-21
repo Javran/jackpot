@@ -10,8 +10,8 @@ Project status: Lexical analysis mostly done.
 TODOs:
 
 - Java Spec requires that out-of-range literals resulting in compliation errors.
-  For now the plan is to do a scan on parsed tokens so we have previous token available
-  (we need this bit of info to tell a negative literal)
+  We can try to eliminate some of those cases but it's best to do that after we have AST available.
+  (as we can't tell whether a minus operator is a binary or unary one before that).
 
 - Due to current limitation of `Data.Scientific.Scientific` type, the `base10Exponent` can only store `Int`,
   meaning we should probably throw out raw strings that are too long sooner rather than later.
