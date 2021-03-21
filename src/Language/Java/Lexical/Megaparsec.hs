@@ -1,7 +1,10 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Language.Java.Lexical.Megaparsec
   ( module Text.Megaparsec
   , P
   , runP
+  , customErrors
   )
 where
 
@@ -13,8 +16,8 @@ where
  -}
 
 import Data.Bifunctor
+import Data.Foldable
 import Data.Void
-import Language.Java.PError
 import Text.Megaparsec
 
 {-
@@ -26,3 +29,13 @@ type P = Parsec Void String
 
 runP :: P a -> (String -> e) -> String -> Either e a
 runP p k raw = first (k . errorBundlePretty) (parse p "" raw)
+
+customErrors :: (Stream s, Ord e) => ParseErrorBundle s e -> [e]
+customErrors eb = case fold (bundleErrors eb) of
+  TrivialError {} -> []
+  FancyError _ s ->
+    concatMap
+      (\case
+         ErrorCustom e -> [e]
+         _ -> [])
+      s
