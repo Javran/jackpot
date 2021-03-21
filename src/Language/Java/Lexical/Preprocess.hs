@@ -19,6 +19,7 @@ module Language.Java.Lexical.Preprocess where
 
 import Control.Monad
 import Data.Char
+import Data.List.Extra
 import Numeric
 import Text.ParserCombinators.ReadP
 
@@ -75,11 +76,11 @@ lineTerminatorNorm :: String -> Maybe String
 lineTerminatorNorm = runReadP lineTerminatorNormP
 
 dropLastSub :: String -> String
-dropLastSub "" = ""
-dropLastSub xs =
-  if last xs == '\x1a'
-    then init xs
-    else xs
+dropLastSub xs = case zs of
+  ['\x1a'] -> ys
+  _ -> xs
+  where
+    (ys, zs) = splitAtEnd 1 xs
 
 preprocess :: String -> Maybe String
 preprocess = unicodeEscape >=> lineTerminatorNorm >=> pure . dropLastSub

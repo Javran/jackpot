@@ -6,6 +6,7 @@ import Control.Applicative
 import Control.Monad.Except
 import Data.Char
 import Data.Scientific
+import Data.List.Extra
 import Language.Java.Lexical.FloatingPoint (floatingPointLiteralS)
 import Language.Java.Lexical.PlatformFunction
 import {-# SOURCE #-} Language.Java.Lexical.Alex
@@ -313,21 +314,6 @@ preprocessTextBlock xs0 = do
   '\n' : xs2 <- pure $ dropWhile (\ch -> isSpace ch && ch /= '\n') xs1
   (xs3, "\"\"\"") <- pure $ splitAtEnd 3 xs2
   pure xs3
-
--- splitAt but from end. works on non-empty l and positive l.
--- inspired by:
--- https://www.joachim-breitner.de/blog/600-On_taking_the_last_n_elements_of_a_list
-splitAtEnd :: Int -> [a] -> ([a], [a])
-splitAtEnd n l = go (drop n l) $ zipWith (\i _ -> splitAt i l) [0 ..] l
-  where
-    go [] r = if null r then (l, []) else head r
-    go (_ : xs) (_ : ys) = go xs ys
-    go (_ : _) [] =
-      {-
-        for `go xs ys`, `ys` can never exhaust before `xs`,
-        as `xs == drop n ys`.
-       -}
-      error "unreachable"
 
 textBlockBodyP :: ReadP String
 textBlockBodyP =

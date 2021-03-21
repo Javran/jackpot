@@ -21,6 +21,7 @@ dependencies:
 - fused-effects
 - transformers
 - megaparsec
+- extra
 
 library:
   source-dirs: src
