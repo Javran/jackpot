@@ -93,7 +93,7 @@ ignorePendingBytes :: AlexInput -> AlexInput
 ignorePendingBytes (p, c, _ps, s) = (p, c, [], s)
 
 alexError :: Alex sig m => String -> m a
-alexError msg = throwError $ AlexSimpleError msg
+alexError msg = throwError $ SimpleError msg
 
 alexMonadScan :: Alex sig m => m Token
 alexMonadScan = do

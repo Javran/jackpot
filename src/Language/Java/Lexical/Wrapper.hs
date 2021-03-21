@@ -17,11 +17,10 @@ allTokens =
     x -> (x :) <$> allTokens
 
 parseAll :: String -> Either PError [Token]
-parseAll xs =
+parseAll xs = do
+  ys <- preprocess xs
   fmap snd
     . run
     . runExceptT @PError
     . runState @AlexState (alexInitState ys)
     $ allTokens
-  where
-    Just ys = preprocess xs

@@ -4,15 +4,18 @@ module Language.Java.Lexical.PreprocessSpec where
 
 import Data.Char
 import Language.Java.Lexical.Preprocess
+import Language.Java.PError
 import Test.Hspec
 import Text.RawString.QQ
 
 spec :: Spec
 spec = do
   describe "unicodeEscape" $ do
-    let parseOk inp expected = unicodeEscape inp `shouldBe` Just expected
+    let parseOk inp expected = unicodeEscape inp `shouldBe` Right expected
         parseSame s = parseOk s s
-        parseFail inp = unicodeEscape inp `shouldBe` Nothing
+        isUeErr (Left UnicodeEscapeError {}) = True
+        isUeErr _ = False
+        parseFail inp = unicodeEscape inp `shouldSatisfy` isUeErr
     specify "normal" $ do
       parseSame "AABBB"
       parseSame "AA😹😹 "

@@ -26,16 +26,18 @@ where
   preprocessing.
  -}
 
-import Control.Arrow
+import Control.Arrow ((>>>))
 import Control.Monad
+import Data.Bifunctor
 import Data.Char
 import Data.Function
 import Data.List.Extra
+import Data.Void
 import Language.Java.PError
 import Numeric
 import Text.Megaparsec
 
-type P = Parsec PError String
+type P = Parsec Void String
 
 unicodeEscapeP :: P String
 unicodeEscapeP = concat <$> many (nonSlash <|> mayEscape)
@@ -60,8 +62,11 @@ unicodeEscapeP = concat <$> many (nonSlash <|> mayEscape)
                   pure $ drop 1 ss <> [chr v]
                 _ -> err
 
-unicodeEscape :: String -> Maybe String
-unicodeEscape = parseMaybe unicodeEscapeP
+runP :: P a -> String -> Either PError a
+runP p raw = first (UnicodeEscapeError . errorBundlePretty) (parse p "" raw)
+
+unicodeEscape :: String -> Either PError String
+unicodeEscape = runP unicodeEscapeP
 
 {-
   Normalizes CR+LF / CR / LF to LF (\n).
@@ -84,5 +89,5 @@ dropLastSub xs = case zs of
   where
     (ys, zs) = splitAtEnd 1 xs
 
-preprocess :: String -> Maybe String
+preprocess :: String -> Either PError String
 preprocess = unicodeEscape >=> pure . (lineTerminatorNorm >>> dropLastSub)

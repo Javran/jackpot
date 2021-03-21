@@ -5,6 +5,6 @@ module Language.Java.PError where
  -}
 
 data PError
-  = UnicodeEscapeError
-  | AlexSimpleError String
+  = SimpleError {ePpr :: String}
+  | UnicodeEscapeError {ePpr :: String}
   deriving (Show, Eq, Ord)
