@@ -54,3 +54,8 @@ spec = do
       parseOk
         "CDEF\r\nA\n\rB\r\r\nVCCCC\r\r\n\n!!\r\rGH"
         "CDEF\nA\n\nB\n\nVCCCC\n\n\n!!\n\nGH"
+  describe "dropLastSub" $ do
+    let parseEq inp expected = dropLastSub inp `shouldBe` expected
+    specify "example" $ do
+      parseEq "[]\x1A" "[]"
+      parseEq "fooo" "fooo"

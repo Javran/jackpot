@@ -2,7 +2,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Language.Java.Lexical.LexerSpec where
+module Language.Java.Lexical.LexerSpec
+  ( spec
+  )
+where
 
 {-
   Note that this does not directly import Lexer but rather the Wrapper module,
@@ -19,6 +22,28 @@ import Test.Hspec
 import Text.RawString.QQ
 import Text.Read
 
+ident :: (String -> Token)
+ident = Identifier
+
+int, long :: Integer -> Token
+int v = IntegerLiteral v False
+long v = IntegerLiteral v True
+
+float, double :: Scientific -> Token
+float v = FloatingPointLiteral v False
+double v = FloatingPointLiteral v True
+
+nil, tt, ff :: Token
+nil = NullLiteral
+tt = BooleanLiteral True
+ff = BooleanLiteral False
+
+char :: Char -> Token
+char = CharacterLiteral
+
+str :: String -> Token
+str = StringLiteral
+
 parseOk :: String -> [Token] -> Expectation
 parseOk raw expected =
   parseAll (fromString raw) `shouldBe` Right expected
@@ -27,9 +52,8 @@ parseFail :: String -> Expectation
 parseFail raw =
   parseAll (fromString raw) `shouldSatisfy` isLeft
 
-spec :: Spec
-spec = do
-  let ident = Identifier
+whiteSpaceSpec :: Spec
+whiteSpaceSpec =
   describe "whitespace" $ do
     specify "SP HT LF FF CR" $
       parseOk " \t\n\f\r" []
@@ -41,35 +65,29 @@ spec = do
       parseFail "\v"
       parseFail " \t\n\f\r\v"
 
-  describe "optional last SUB" $
-    specify "example" $ do
-      parseOk "[]\x1A" [SepLBracket, SepRBracket]
-      parseFail "[]\x1A\x1A"
-
+boolAndNullLitSpec :: Spec
+boolAndNullLitSpec =
   describe "Boolean and Null literals" $ do
     specify "NullLiteral" $
       parseOk "null" [NullLiteral]
 
     specify "BooleanLiteral" $
       parseOk "true false" $ BooleanLiteral <$> [True, False]
-  let int v = IntegerLiteral v False
-      long v = IntegerLiteral v True
 
+commentSpec :: Spec
+commentSpec =
   describe "TraditionalComment" $ do
-    let n = NullLiteral
-        t = BooleanLiteral True
-        f = BooleanLiteral False
     specify "example set #0" $ do
       parseOk "1 /**/" [int 1]
       parseOk "2/**/" [int 2]
       parseOk "/**/ 3" [int 3]
       parseOk "/* this comment /* // /** ends here: */ 4" [int 4]
-      parseOk "/* null */ false /**/null// null" [f, n]
-      parseOk "/*****null" [OpSlash, OpStar, OpStar, OpStar, OpStar, OpStar, n]
+      parseOk "/* null */ false /**/null// null" [ff, nil]
+      parseOk "/*****null" [OpSlash, OpStar, OpStar, OpStar, OpStar, OpStar, nil]
       parseOk " /*/" [OpSlash, OpStar, OpSlash]
       parseOk "/*null*/ /*/" [OpSlash, OpStar, OpSlash]
     specify "example set #1" $ do
-      parseOk "/*/null" [OpSlash, OpStar, OpSlash, n]
+      parseOk "/*/null" [OpSlash, OpStar, OpSlash, nil]
       parseOk "/**/2" [int 2]
       parseOk "/***/3" [int 3]
       parseOk "/****/4" [int 4]
@@ -77,9 +95,9 @@ spec = do
       parseOk "/******/6" [int 6]
       parseOk "/***!***/7" [int 7]
       parseOk "/***!****/8" [int 8]
-      parseOk "9/* * * * */null" [int 9, n]
+      parseOk "9/* * * * */null" [int 9, nil]
     specify "anything inside block comments" $
-      parseOk "true/* \v */false" [t, f]
+      parseOk "true/* \v */false" [tt, ff]
     specify "no nested comments" $
       parseOk "/* no /* nesting */ */" [OpStar, OpSlash]
     specify "multiline" $ do
@@ -89,22 +107,24 @@ spec = do
                  * comment
                  */true
                 |]
-        [t]
+        [tt]
       parseOk
         [r|true
                 /**********
                  * comment
                  **********/false
                 |]
-        [t, f]
+        [tt, ff]
       parseOk
         [r|null
                 /**********
                  **********/
                  false
                 |]
-        [n, f]
+        [nil, ff]
 
+intLitSpec :: Spec
+intLitSpec =
   {-
     TODO: Java spec requires an out-of-range literal to be
     identified as compliation error,
@@ -195,9 +215,9 @@ spec = do
         parseOk "0b111_____01" [int 0b11101]
         parseOk "0b111___1_1__01" [int 0b1111101]
 
+fpLitSpec :: Spec
+fpLitSpec =
   describe "FloatingPointLiteral" $ do
-    let float v = FloatingPointLiteral v False
-        double v = FloatingPointLiteral v True
     describe "DecimalFloatingPointLiteral" $ do
       specify "Digits . [Digits] [ExponentPart] [FloatTypeSuffix]" $ do
         parseOk "1234." [double 1234]
@@ -255,6 +275,9 @@ spec = do
           parseOk "0xAABB.CDEp12" [double $ hexAux 0xAABBCDE 3 12]
           parseOk "0X.AC01Dp+3f" [float $ hexAux 0xAC01D 5 3]
           parseOk "0X.66_77_88P-54D" [double $ hexAux 0x667788 6 (-54)]
+
+kwAndIdentSpec :: Spec
+kwAndIdentSpec =
   describe "Keyword or Identifier" $ do
     specify "examples" $
       parseOk
@@ -268,8 +291,8 @@ spec = do
         "a_normal_one var yield or record"
         [ident "a_normal_one", IdentVar, IdentYield, ident "or", IdentRecord]
 
-  let char = CharacterLiteral
-      str = StringLiteral
+textLitSpec :: Spec
+textLitSpec = do
   describe "CharacterLiteral" $ do
     specify "SingleCharacter" $ do
       parseOk [r|'r'|] [char 'r']
@@ -460,3 +483,13 @@ spec = do
             \ \n\
             \        t"
         ]
+
+spec :: Spec
+spec = do
+  whiteSpaceSpec
+  boolAndNullLitSpec
+  commentSpec
+  intLitSpec
+  fpLitSpec
+  kwAndIdentSpec
+  textLitSpec
