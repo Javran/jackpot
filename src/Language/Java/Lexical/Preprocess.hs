@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Language.Java.Lexical.Preprocess where
 
 {-
@@ -19,9 +21,11 @@ module Language.Java.Lexical.Preprocess where
 
 import Control.Monad
 import Data.Char
+import Data.Function
 import Data.List.Extra
 import Numeric
 import Text.ParserCombinators.ReadP
+import Control.Arrow
 
 unicodeEscapeP :: ReadP String
 unicodeEscapeP =
@@ -54,26 +58,14 @@ unicodeEscape = runReadP unicodeEscapeP
   This plays nicely with Alex since in Alex,
   regular expression `.` means anything but \n.
  -}
-lineTerminatorNormP :: ReadP String
-lineTerminatorNormP =
-  concat <$> many (lineTerms <++ munch1 (`notElem` "\r\n"))
-  where
-    lineTerms =
-      "\n"
-        <$ (void (char '\n')
-              <++ (do
-                     _ <- char '\r'
-                     -- a bit subtle here,
-                     -- as "optional" might create an unwanted branch,
-                     -- if we can find a '\n' following it,
-                     -- the decision should commit.
-                     xs <- look
-                     case xs of
-                       '\n' : _ -> get >> pure ()
-                       _ -> pure ()))
-
-lineTerminatorNorm :: String -> Maybe String
-lineTerminatorNorm = runReadP lineTerminatorNormP
+lineTerminatorNorm :: String -> String
+lineTerminatorNorm =
+  fix
+    (\f -> \case
+       '\r' : '\n' : ys -> '\n' : f ys
+       '\r' : ys -> '\n' : f ys
+       y : ys -> y : f ys
+       [] -> [])
 
 dropLastSub :: String -> String
 dropLastSub xs = case zs of
@@ -83,4 +75,4 @@ dropLastSub xs = case zs of
     (ys, zs) = splitAtEnd 1 xs
 
 preprocess :: String -> Maybe String
-preprocess = unicodeEscape >=> lineTerminatorNorm >=> pure . dropLastSub
+preprocess = unicodeEscape >=> pure . (lineTerminatorNorm >>> dropLastSub)

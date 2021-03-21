@@ -44,7 +44,7 @@ spec = do
       parseFail [r|AAA\uABG1|]
       parseFail [r|\uABCD\uAAVE|]
   describe "lineTerminatorNorm" $ do
-    let parseOk inp expected = lineTerminatorNorm inp `shouldBe` Just expected
+    let parseOk inp expected = lineTerminatorNorm inp `shouldBe` expected
     specify "examples" $ do
       parseOk "ABCD" "ABCD"
       parseOk "\n\n\n" "\n\n\n"
