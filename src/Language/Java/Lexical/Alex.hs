@@ -10,6 +10,7 @@ import Data.Char (ord)
 import Data.Word (Word8)
 import Language.Java.Lexical.Lexer
 import Language.Java.Lexical.Token
+import Language.Java.PError
 
 type Byte = Word8
 
@@ -113,7 +114,7 @@ alexMonadScan = do
 
 type Alex sig m =
   ( Has (State AlexState) sig m
-  , Has (Error AlexError) sig m
+  , Has (Error PError) sig m
   )
 
 alexInitState :: String -> AlexState
@@ -126,10 +127,6 @@ alexInitState inp =
     , alexStartCode = 0
     , alexPrevToken = Nothing
     }
-
-data AlexError
-  = AlexSimpleError String
-  deriving (Show, Eq)
 
 data AlexState = AlexState
   { alexPos :: !AlexPosn -- position at current input location

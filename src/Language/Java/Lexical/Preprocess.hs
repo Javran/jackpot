@@ -1,6 +1,13 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeApplications #-}
 
-module Language.Java.Lexical.Preprocess where
+module Language.Java.Lexical.Preprocess
+  ( unicodeEscape
+  , lineTerminatorNorm
+  , dropLastSub
+  , preprocess
+  )
+where
 
 {-
   Java spec requires that:
@@ -19,39 +26,42 @@ module Language.Java.Lexical.Preprocess where
   preprocessing.
  -}
 
+import Control.Arrow
 import Control.Monad
 import Data.Char
 import Data.Function
 import Data.List.Extra
+import Language.Java.PError
 import Numeric
-import Text.ParserCombinators.ReadP
-import Control.Arrow
+import Text.Megaparsec
 
-unicodeEscapeP :: ReadP String
-unicodeEscapeP =
-  concat
-    <$> many
-      ((do
-          ss <- munch1 (== '\\')
-          if even (length ss)
-            then pure ss -- not eligible
+type P = Parsec PError String
+
+unicodeEscapeP :: P String
+unicodeEscapeP = concat <$> many (nonSlash <|> mayEscape)
+  where
+    nonSlash = takeWhile1P (Just "not slash") (/= '\\')
+    mayEscape = do
+      ss <- takeWhile1P (Just "potential escape") (== '\\')
+      if even (length ss)
+        then -- not eligible
+          pure ss
+        else do
+          us <- takeWhileP (Just "'u'") (== 'u')
+          if null us
+            then -- eligible but without any 'u'
+              pure ss
             else do
-              us <- munch (== 'u')
-              if null us
-                then pure ss
-                else do
-                  ds <- replicateM 4 (satisfy isHexDigit)
-                  [(v, "")] <- pure $ readHex ds
-                  pure $ drop 1 ss <> [chr v])
-         <++ munch1 (/= '\\'))
-
-runReadP :: ReadP a -> String -> Maybe a
-runReadP p raw = case readP_to_S (p <* eof) raw of
-  [(v, "")] -> Just v
-  _ -> Nothing
+              ds <- takeP (Just "hex value") 4
+              let err = fail $ "invalid hex value: " <> ds
+              unless (all isHexDigit ds) err
+              case readHex @Int ds of
+                [(v, "")] ->
+                  pure $ drop 1 ss <> [chr v]
+                _ -> err
 
 unicodeEscape :: String -> Maybe String
-unicodeEscape = runReadP unicodeEscapeP
+unicodeEscape = parseMaybe unicodeEscapeP
 
 {-
   Normalizes CR+LF / CR / LF to LF (\n).

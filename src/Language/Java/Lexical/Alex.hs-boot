@@ -5,6 +5,7 @@ module Language.Java.Lexical.Alex where
 import Control.Effect.Error
 import Control.Effect.State
 import Data.Word (Word8)
+import Language.Java.PError
 
 type Byte = Word8
 
@@ -20,13 +21,11 @@ alexInputPrevChar :: AlexInput -> Char
 
 data AlexPosn
 
-data AlexError
-
 alexError :: Alex sig m => String -> m a
 
 type Alex sig m =
   ( Has (State AlexState) sig m
-  , Has (Error AlexError) sig m
+  , Has (Error PError) sig m
   )
 
 data AlexState

@@ -8,6 +8,7 @@ import Control.Monad.Trans.Except
 import Language.Java.Lexical.Alex
 import Language.Java.Lexical.Preprocess
 import Language.Java.Lexical.Token
+import Language.Java.PError
 
 allTokens :: Alex sig m => m [Token]
 allTokens =
@@ -15,11 +16,11 @@ allTokens =
     EndOfFile -> pure []
     x -> (x :) <$> allTokens
 
-parseAll :: String -> Either AlexError [Token]
+parseAll :: String -> Either PError [Token]
 parseAll xs =
   fmap snd
     . run
-    . runExceptT @AlexError
+    . runExceptT @PError
     . runState @AlexState (alexInitState ys)
     $ allTokens
   where
