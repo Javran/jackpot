@@ -1,11 +1,7 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
-
 module Language.Java.Lexical.PlatformFunction where
 
-import Data.Char
-import Data.FileEmbed
-import qualified Data.HashSet as HS
+import Data.Char (GeneralCategory (..), isSpace)
+import Data.Char.GeneralCategory.V13_0_0
 import Data.Ix
 import Data.List
 import Data.List.Split
@@ -29,18 +25,6 @@ import Data.List.Split
 
  -}
 
-javaIdentifierStarts :: HS.HashSet Char
-javaIdentifierStarts = HS.fromList $ chr <$> read @[Int] $(embedStringFile "embed-data/start.txt")
-
-isJavaIdentifierStart :: Char -> Bool
-isJavaIdentifierStart ch = ch `HS.member` javaIdentifierStarts
-
-javaIdentifierParts :: HS.HashSet Char
-javaIdentifierParts = HS.fromList $ chr <$> read @[Int] $(embedStringFile "embed-data/part.txt")
-
-isJavaIdentifierPart :: Char -> Bool
-isJavaIdentifierPart ch = ch `HS.member` javaIdentifierParts
-
 {-
   A character may start a Java identifier if and only if one of the following conditions is true:
 
@@ -49,8 +33,8 @@ isJavaIdentifierPart ch = ch `HS.member` javaIdentifierParts
   + the referenced character is a currency symbol (such as '$')
   + the referenced character is a connecting punctuation character (such as '_').
  -}
-_isJavaIdentifierStart :: Char -> Bool
-_isJavaIdentifierStart ch =
+isJavaIdentifierStart :: Char -> Bool
+isJavaIdentifierStart ch =
   isLetter ch || gc
     `elem` [ LetterNumber
            , CurrencySymbol
@@ -72,10 +56,10 @@ _isJavaIdentifierStart ch =
   + isIdentifierIgnorable returns true for the character
 
  -}
-_isJavaIdentifierPart :: Char -> Bool
-_isJavaIdentifierPart ch =
+isJavaIdentifierPart :: Char -> Bool
+isJavaIdentifierPart ch =
   isLetter ch
-    || isNumber ch
+    || gc /= OtherNumber && isNumber ch
     || gc
     `elem` [ CurrencySymbol
            , ConnectorPunctuation
@@ -116,7 +100,8 @@ stripIndent raw = result
     pairs = fmap (span isSpace) indivLines
     {-
       Then, the minimum indentation (min) is determined as follows:
-      + For each non-blank line (as defined by isBlank()), the leading white space characters are counted.
+      + For each non-blank line (as defined by isBlank()),
+        the leading white space characters are counted.
       + The leading white space characters on the last line are also counted even if blank.
       The min value is the smallest of these counts.
      -}

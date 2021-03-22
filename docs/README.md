@@ -158,6 +158,8 @@ ab(c+a+bb*c)*bb*a
 
 ## Regarding `$JavaIdentifierStart` and `$JavaIdentifierPart`
 
+TODO: this section is slightly outdated.
+
 This is an unfortunate bit: the platform library function
 `Data.Char.generalCategory` relies on UnicodeData [generated and shiped with GHC](libraries/base/include/WCsubst.h). For this implementation to be truly independent of GHC version (as long as it's modern
 to support all pragmas used by this library), that is out of the question.

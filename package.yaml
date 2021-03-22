@@ -15,13 +15,12 @@ dependencies:
 - mtl
 - scientific
 - containers
-- file-embed
-- unordered-containers
 - split
 - fused-effects
 - transformers
 - megaparsec
 - extra
+- unicode-general-category
 
 library:
   source-dirs: src

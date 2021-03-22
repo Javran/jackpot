@@ -352,3 +352,10 @@ getTextBlock raw = case preprocessTextBlock raw of
     parseByReadP (StringLiteral <$> textBlockBodyP) (stripIndent content)
   Nothing ->
     alexError "parse error"
+
+
+getIdentifier :: Alex sig m => String -> m Token
+getIdentifier xs = case xs of
+  [] -> alexError "empty identifier"
+  y:ys | isJavaIdentifierStart y && all isJavaIdentifierPart ys -> pure (Identifier xs)
+  _ -> alexError "identifier contains invalid character."
