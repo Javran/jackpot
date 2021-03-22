@@ -123,7 +123,6 @@ alexInitState inp =
     , alexInp = inp
     , alexPrevChar = '\n'
     , alexStartCode = 0
-    , alexPrevToken = Nothing
     }
 
 data AlexState = AlexState
