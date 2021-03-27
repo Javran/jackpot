@@ -16,6 +16,9 @@ allTokens =
     EndOfFile -> pure []
     x -> (x :) <$> allTokens
 
+lexer :: Alex sig m => (Token -> m a) -> m a
+lexer k = alexMonadScan >>= k
+
 parseAll :: String -> Either PError [Token]
 parseAll xs = do
   ys <- preprocess xs
