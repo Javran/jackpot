@@ -158,18 +158,38 @@ ab(c+a+bb*c)*bb*a
 
 ## Regarding `$JavaIdentifierStart` and `$JavaIdentifierPart`
 
-TODO: this section is slightly outdated.
+Note that the actual names in `Lexer.x` are: `$JavaIdentifierStartLite` and `$JavaIdentifierPartLite`.
 
-This is an unfortunate bit: the platform library function
-`Data.Char.generalCategory` relies on UnicodeData [generated and shiped with GHC](libraries/base/include/WCsubst.h). For this implementation to be truly independent of GHC version (as long as it's modern
-to support all pragmas used by this library), that is out of the question.
+The difference in names hints that the lexing rule is relaxed to allow all non-ASCII characters and
+we rely on Alex action, which in turn calls
+`PlatformFunction.{isJavaIdentifierStart,isJavaIdentifierPart}` to actually recognize the language.
 
-In addition, on Haskell side, `Data.IntSet` and `Data.HashSet` simply doesn't have sufficiently good performance
-even on small inputs comparing with that of Alex's - one can easily tell that by simply running
-the test suite.
+While it is totally possible to correctly recognize Java identifiers from `Lexer.x`,
+it would result in [some unpleasant chunks](https://github.com/Javran/jackpot/blob/bc2c02be271675f8dc16c6bda86eff2aa7fb1e82/src/Language/Java/Lexical/Lexer.x#L31-L32) in `Lexer.x` that I really don't like.
 
-Therefore for now I've settled on dump that giant pile of unreadable garbage in Lexer.x and live with it.
-This situation might change however, depending on where [this Alex issue](https://github.com/simonmar/alex/issues/126) is heading.
+### Correctness
 
-For now both `$JavaIdentifierStart` and `$JavaIdentifierPart` are generated
-by running [`UnicodeGen.kt`](/misc/UnicodeGen.kt) with appropriate JDK version.
+This does not have correctness implication, as from Java spec "§3.1 Unicode":
+
+> Except for comments (§3.7), identifiers (§3.8, and the contents of character literals, string literals, and text blocks (§3.10.4, §3.10.5, §3.10.6), all input elements (§3.5) in a program are formed only from ASCII characters (or Unicode escapes (§3.3) which result in ASCII characters).
+
+Given correct lexing of comments, character / string literals, we can safely assume
+that all other non-ASCII characters are part of an identifier, consume it and verify its validity
+as Java identifier later.
+
+### Unicode 13.0.0
+
+Quoting from Java spec "§3.1 Unicode":
+
+> Upgrades to newer versions of the Unicode Standard occurred in ...
+> and Java SE 15 (to Unicode 13.0).
+
+However, we cannot rely on `Data.Char.generalCategory` provided by `base` package,
+as it relies on UnicodeData [generated and shiped with GHC](https://github.com/ghc/ghc/blob/master/libraries/base/include/WCsubst.h).
+
+To untie this parser from GHC's Unicode version, we are using [unicode-general-category](https://github.com/Javran/unicode-general-category) instead.
+
+### Alex macro
+
+There are discussions about [having Alex macros to handle general category](https://github.com/simonmar/alex/issues/126), which could be a nice alternative to my current solution.
+But the discussion is still ongoing and it's unlikely to move forward very soon, given all the concerns.

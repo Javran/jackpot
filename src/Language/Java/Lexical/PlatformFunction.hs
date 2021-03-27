@@ -14,15 +14,6 @@ import Data.List.Split
   - String.stripIndent
 
   as required by Java spec.
-
-  TODO: for now Java is using Unicode 13 while GHC's UnicodeData is a bit outdated,
-  and this is making differences in generalCategory.
-  We'll need to somehow keep track of Unicode 13 data - before that we cannot follow
-  the description just by using counterpart functions in Haskell.
-
-  TODO: this is not actually being used right now - the slowdown is significant
-  even on small size inputs.
-
  -}
 
 {-
@@ -59,14 +50,20 @@ isJavaIdentifierStart ch =
 isJavaIdentifierPart :: Char -> Bool
 isJavaIdentifierPart ch =
   isLetter ch
-    || gc /= OtherNumber && isNumber ch
+    || (
+        {-
+          I'm not actually sure why OtherNumber category is excluded,
+          but Java's counterpart is implemented this way.
+         -}
+        gc /= OtherNumber)
+      && isNumber ch
     || gc
     `elem` [ CurrencySymbol
            , ConnectorPunctuation
            , SpacingCombiningMark
            , NonSpacingMark
            ]
-    || _isIdentifierIgnorable ch
+    || isIdentifierIgnorable ch
   where
     gc = generalCategory ch
 
@@ -79,8 +76,8 @@ isJavaIdentifierPart ch =
   + '\u007F' through '\u009F'
   + all characters that have the FORMAT general category value
  -}
-_isIdentifierIgnorable :: Char -> Bool
-_isIdentifierIgnorable ch =
+isIdentifierIgnorable :: Char -> Bool
+isIdentifierIgnorable ch =
   inRange ('\x0000', '\x0008') ch
     || inRange ('\x000E', '\x0001B') ch
     || inRange ('\x007F', '\x009F') ch
