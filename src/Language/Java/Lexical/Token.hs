@@ -5,14 +5,14 @@ module Language.Java.Lexical.Token where
 import Control.Applicative
 import Control.Monad.Except
 import Data.Char
-import Data.Scientific
 import Data.List.Extra
+import Data.Scientific
+import {-# SOURCE #-} Language.Java.Lexical.Alex
 import Language.Java.Lexical.FloatingPoint (floatingPointLiteralS)
 import Language.Java.Lexical.PlatformFunction
-import {-# SOURCE #-} Language.Java.Lexical.Alex
 import Numeric
 import Text.ParserCombinators.ReadP hiding (many)
-
+import qualified Language.Java.Lexical.Megaparsec as MP
 
 {-
   Note that operators does not include anything that begins with ">"
@@ -252,6 +252,9 @@ parseByReadP parser inp =
       pure tok
     _ -> alexError "parse error"
 
+parseByMp :: Alex sig m => MP.P Token -> String -> m Token
+parseByMp parser inp = undefined
+
 mkEscapeBodyP :: ReadP r -> (Char -> r) -> ReadP r
 mkEscapeBodyP fallbackP done = do
   _ <- char '\\'
@@ -353,9 +356,8 @@ getTextBlock raw = case preprocessTextBlock raw of
   Nothing ->
     alexError "parse error"
 
-
 getIdentifier :: Alex sig m => String -> m Token
 getIdentifier xs = case xs of
   [] -> alexError "empty identifier"
-  y:ys | isJavaIdentifierStart y && all isJavaIdentifierPart ys -> pure (Identifier xs)
+  y : ys | isJavaIdentifierStart y && all isJavaIdentifierPart ys -> pure (Identifier xs)
   _ -> alexError "identifier contains invalid character."

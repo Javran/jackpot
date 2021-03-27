@@ -31,6 +31,12 @@ type P = Parsec Void String
 runP :: Parsec e s c -> (ParseErrorBundle s e -> l) -> s -> Either l c
 runP p k raw = first k (parse p "" raw)
 
+{-
+  TODO: Do we really need megaparsec here? This ParseErrorBundle
+  is really a headache to deal with vs. ReadP is simple and
+  we can wrap it around ExceptT to provide proper exception values.
+ -}
+
 -- just get the list of custom errors and pretty printed message,
 -- which seems most useful out of other stuff.
 runP'
